@@ -15,10 +15,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+using System;
 using MindTouch.Collections;
 
 namespace Droog.Calculon.Framework {
-    public class Mailbox<TRecipient> {
+    public class Mailbox<TRecipient> : IMailbox<TRecipient> {
 
         private readonly ProcessingQueue<ExpressionMessage<TRecipient>> _queue;
         private readonly TRecipient _recipient;
@@ -28,12 +29,25 @@ namespace Droog.Calculon.Framework {
             _queue = new ProcessingQueue<ExpressionMessage<TRecipient>>(Dispatch, parallelism);
         }
 
-        public void Accept(ExpressionMessage<TRecipient> message) {
+        public bool Accept(ExpressionMessage<TRecipient> message) {
             _queue.TryEnqueue(message);
+            return true;
         }
 
         private void Dispatch(ExpressionMessage<TRecipient> message) {
             message.Invoke(_recipient);
+        }
+
+        public bool Accept<TData>(Message<TData> message) {
+            throw new NotImplementedException();
+        }
+
+
+        public bool IsAlive {
+            get { return true; }
+        }
+
+        public void Dispose() {
         }
     }
 }

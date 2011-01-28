@@ -50,14 +50,23 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Director.cs" />
+    <Compile Include="Framework\DispatchChain.cs" />
     <Compile Include="Framework\ExpressionMessage.cs" />
     <Compile Include="Framework\ExpressionTransport.cs" />
     <Compile Include="Framework\ExpressionType.cs" />
+    <Compile Include="Framework\ImmediateDispatcher.cs" />
+    <Compile Include="Framework\MailboxRepository.cs" />
+    <Compile Include="IMailboxFactory.cs" />
+    <Compile Include="IMailboxRepository.cs" />
+    <Compile Include="Framework\RepositoryDispatcher.cs" />
+    <Compile Include="IDispatcherLink.cs" />
+    <Compile Include="NoDispatcherAvailableExecption.cs" />
+    <Compile Include="IDispatcher.cs" />
+    <Compile Include="MailboxExpiredException.cs" />
     <Compile Include="IAddressedExpressionTransport.cs" />
     <Compile Include="IAddressedMessageTransport.cs" />
     <Compile Include="ICombinedTransport.cs" />
     <Compile Include="IExpressionTransport.cs" />
-    <Compile Include="IGrip.cs" />
     <Compile Include="IMailbox.cs" />
     <Compile Include="IMessageTransport.cs" />
     <Compile Include="Framework\Mailbox.cs" />

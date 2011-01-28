@@ -15,14 +15,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+using System;
 using Droog.Calculon.Framework;
 
 namespace Droog.Calculon {
-    public interface IMailbox {
-        void Accept<TData>(Message<TData> message);
+    public interface IMailbox : IDisposable {
+        bool Accept<TData>(Message<TData> messager);
+        bool IsAlive { get; }
     }
 
-    public interface IMailbox<TRecipient> {
-        void Accept(ExpressionMessage<TRecipient> message);
+    public interface IMailbox<TRecipient> : IMailbox {
+        bool Accept(ExpressionMessage<TRecipient> message);
     }
 }
