@@ -61,6 +61,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ActorBuilderTests.cs" />
     <Compile Include="ReferenceScenario.cs" />
     <Compile Include="ExpressionMessageTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

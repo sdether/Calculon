@@ -21,74 +21,69 @@ namespace Droog.Calculon.Tests {
 
     [TestFixture]
     public class ReferenceScenario {
-        private Director _director;
+        private Stage _stage;
         private Origin _origin;
 
         [SetUp]
         public void Setup() {
-            _director = DirectorBuilder.Build();
-            _origin = _director.Create<Origin>("origin");
+            _stage = new Stage();
+            _stage.AddActor<Origin>().WithId("origin").BuildWithExpressionTransport((t, m) => _origin = new Origin(t, m));
         }
 
         [TearDown]
         public void Teardown() {
-            _director.Dispose();
-        }
-
-        [Test]
-        public void Meta_is_injected() {
-            var o2 = _director.Create<Origin>("again");
-            Assert.AreEqual("again", o2.Meta.From);
-            Assert.AreEqual(typeof(Origin), o2.Meta.SenderType);
+            _stage.Dispose();
         }
 
         [Test]
         public void Echo() {
-            var actor = _director.Create<TestActor>("foo");
-            var actorx = _director.Create<TestActor>("baz");
-            _origin.Echo("foo", "bar");
+            TestActor actor = null, actorx = null;
+            _stage.AddActor<TestActor>().WithId("foo").BuildWithExpressionTransport(t => actor = new TestActor());
+            _stage.AddActor<TestActor>().WithId("baz").BuildWithExpressionTransport(t => actorx = new TestActor());
             Assert.AreEqual("bar", actor.echo);
             Assert.IsNull(actorx.echo);
         }
 
         [Test]
         public void EchoFrom() {
-            var actor = _director.Create<TestActor>("foo");
-            var actorx = _director.Create<TestActor>("baz");
+            TestActor actor = null, actorx = null;
+            _stage.AddActor<TestActor>().WithId("foo").BuildWithExpressionTransport(t => actor = new TestActor());
+            _stage.AddActor<TestActor>().WithId("baz").BuildWithExpressionTransport(t => actorx = new TestActor());
             _origin.EchoFrom("foo");
             Assert.AreEqual(_origin.Meta.From, actor.echo);
-        }
-    }
-
-    public class Origin {
-        private readonly IExpressionTransport _transport;
-        private readonly MessageMeta _meta;
-
-        public Origin(IExpressionTransport transport, MessageMeta meta) {
-            _transport = transport;
-            _meta = meta;
+            Assert.IsNull(actorx.echo);
         }
 
-        public MessageMeta Meta { get { return _meta; } }
+        public class Origin {
+            private readonly IExpressionTransport _transport;
+            private readonly MessageMeta _meta;
 
-        public string Echo(string id, string echo) {
-            return _transport.For<TestActor>(id).SendAndReceive(x => x.Echo(echo)).Wait();
+            public Origin(IExpressionTransport transport, MessageMeta meta) {
+                _transport = transport;
+                _meta = meta;
+            }
+
+            public MessageMeta Meta { get { return _meta; } }
+
+            public string Echo(string id, string echo) {
+                return _transport.For<TestActor>(id).SendAndReceive(x => x.Echo(echo)).Wait();
+            }
+
+            public string EchoFrom(string id) {
+                return _transport.For<TestActor>(id).SendAndReceive((x, m) => x.EchoFrom(m)).Wait();
+            }
         }
 
-        public string EchoFrom(string id) {
-            return _transport.For<TestActor>(id).SendAndReceive((x, m) => x.EchoFrom(m)).Wait();
-        }
-    }
+        public class TestActor {
 
-    public class TestActor {
-
-        public string echo;
-        public string from;
-        public string Echo(string msg) {
-            return echo = msg;
-        }
-        public string EchoFrom(MessageMeta meta) {
-            return from = meta.From;
+            public string echo;
+            public string from;
+            public string Echo(string msg) {
+                return echo = msg;
+            }
+            public string EchoFrom(MessageMeta meta) {
+                return from = meta.From;
+            }
         }
     }
 }

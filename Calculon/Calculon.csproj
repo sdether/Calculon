@@ -49,7 +49,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Director.cs" />
+    <Compile Include="IDirector.cs" />
     <Compile Include="Framework\DispatchChain.cs" />
     <Compile Include="Framework\ExpressionMessage.cs" />
     <Compile Include="Framework\ExpressionTransport.cs" />
@@ -73,6 +73,7 @@
     <Compile Include="Message.cs" />
     <Compile Include="MessageMeta.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Stage.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

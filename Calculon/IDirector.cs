@@ -19,22 +19,7 @@ using System;
 
 namespace Droog.Calculon {
 
-    public class Director : IDisposable{
-        private ICombinedTransport _transport;
-        public ICombinedTransport Transport { get { return _transport; } }
-
-        public void Dispose() {
-            throw new NotImplementedException();
-        }
-
-        public TActor Create<TActor>(string origin) {
-            return default(TActor);
-        }
-    }
-
-    public class DirectorBuilder {
-        public static Director Build() {
-            return new Director();
-        }
+    public interface IDirector {
+        ActorBuilder<TActor, IDirector> AddActor<TActor>();
     }
 }
