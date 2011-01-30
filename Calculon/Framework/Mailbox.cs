@@ -39,9 +39,11 @@ namespace Droog.Calculon.Framework {
     public class Mailbox<TRecipient> : IMailbox<TRecipient> {
 
         private readonly ProcessingQueue<ExpressionMessage<TRecipient>> _queue;
+        private readonly ActorAddress _address;
         private readonly TRecipient _recipient;
 
-        public Mailbox(TRecipient recipient, int parallelism) {
+        public Mailbox(ActorAddress address, TRecipient recipient, int parallelism) {
+            _address = address;
             _recipient = recipient;
             _queue = new ProcessingQueue<ExpressionMessage<TRecipient>>(Dispatch, parallelism);
         }
@@ -54,6 +56,8 @@ namespace Droog.Calculon.Framework {
         private void Dispatch(ExpressionMessage<TRecipient> message) {
             message.Invoke(_recipient);
         }
+
+        public ActorAddress Recipient { get { return _address; } }
 
         public bool Accept<TData>(Message<TData> message) {
             throw new NotImplementedException();

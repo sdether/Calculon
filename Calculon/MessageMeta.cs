@@ -22,42 +22,72 @@ namespace Droog.Calculon {
     public interface IMessage {
         MessageMeta Meta { get; }
     }
+
+    public class ActorAddress {
+        public readonly string Id;
+        public readonly Type Type;
+        public readonly bool IsAnonymous;
+        public readonly bool IsUntyped;
+
+        private ActorAddress(string id, Type type, bool isAnonymous) {
+            Id = id;
+            Type = type;
+            IsAnonymous = isAnonymous;
+            IsUntyped = Type == null;
+        }
+
+        public MessageMeta To<T>() {
+            return new MessageMeta(this, Create<T>());
+        }
+
+        public MessageMeta To<T>(string id) {
+            return new MessageMeta(this, Create<T>(id));
+        }
+
+        public MessageMeta To(string id) {
+            return new MessageMeta(this, Create(id));
+        }
+
+        public MessageMeta To(string id, Type type) {
+            return new MessageMeta(this, Create(id, type));
+        }
+
+        public MessageMeta To(Type type) {
+            return new MessageMeta(this, Create(type));
+        }
+
+        public static ActorAddress Create<T>() {
+            return Create(typeof(T));
+        }
+
+        public static ActorAddress Create<T>(string id) {
+            return Create(id, typeof(T));
+        }
+
+        public static ActorAddress Create(Type type) {
+            return new ActorAddress("__" + Guid.NewGuid(), type, true);
+        }
+
+        public static ActorAddress Create(string id) {
+            return new ActorAddress(id, null, false);
+        }
+
+        public static ActorAddress Create(string id, Type type) {
+            return new ActorAddress(id, type, false);
+        }
+    }
+
     public class MessageMeta {
-        private string _from;
-        private string _to;
-        private Type _recipient;
-        private Type _sender;
+        public readonly ActorAddress Sender;
+        public readonly ActorAddress Recipient;
 
-        public MessageMeta(string from, Type sender) {
-            _from = from;
-            _sender = sender;
-        }
-
-        private MessageMeta() {}
-
-        public string From { get { return _from; } }
-        public string To { get { return _to; } }
-        public Type RecipientType { get { return _recipient; } }
-        public Type SenderType { get { return _sender; } }
-
-        public MessageMeta For(string recipientId) {
-            return For(recipientId, null);
-        }
-
-        public MessageMeta For<TRecipient>() {
-            return For(null, typeof(TRecipient));
-        }
-
-        public MessageMeta For<TRecipient>(string recipientId) {
-            return For(recipientId, typeof(TRecipient));
-        }
-
-        public MessageMeta For(string recipientId, Type recipientType) {
-            return new MessageMeta { _from = _from, _sender = _sender, _to = recipientId, _recipient = recipientType };
+        public MessageMeta(ActorAddress sender, ActorAddress recipient) {
+            Sender = sender;
+            Recipient = recipient;
         }
 
         public MessageMeta Reply() {
-            return new MessageMeta { _from = _to, _sender = _recipient, _to = _from, _recipient = _sender };
+            return new MessageMeta(Recipient, Sender);
         }
     }
 }

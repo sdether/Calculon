@@ -29,14 +29,14 @@ namespace Droog.Calculon.Framework {
         public IMailbox<TRecipient> GetMailbox(MessageMeta meta) {
             IMailbox<TRecipient> mbox;
             lock(_repository) {
-                _repository.TryGetValue(meta.To, out mbox);
+                _repository.TryGetValue(meta.Recipient.Id, out mbox);
                 if(mbox != null && !mbox.IsAlive) {
-                    _repository.Remove(meta.To);
+                    _repository.Remove(meta.Recipient.Id);
                     mbox = null;
                 }
                 if(mbox == null) {
                     mbox = _factory.CreateMailbox(meta);
-                    _repository[meta.To] = mbox;
+                    _repository[meta.Recipient.Id] = mbox;
                 }
             }
             return mbox;

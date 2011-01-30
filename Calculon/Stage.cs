@@ -16,68 +16,33 @@
  * limitations under the License.
  */
 using System;
+using Droog.Calculon.Framework;
 
 namespace Droog.Calculon {
 
     public class Stage : IDirector, IDisposable {
-        private ICombinedTransport _transport;
+        private readonly ActorAddress _address;
+        private readonly ICombinedTransport _transport;
+        private readonly IBackstage _backstage;
+
+        public Stage() : this(Guid.NewGuid().ToString()) {}
+
+        public Stage(string id) {
+            _address = ActorAddress.Create(id, GetType());
+            _backstage = new ImmediateDispatchBackstage();
+        }
         public ICombinedTransport Transport { get { return _transport; } }
 
-        public void Dispose() {
-            throw new NotImplementedException();
-        }
-
         public ActorBuilder<TActor, Stage> AddActor<TActor>() {
-            return new ActorBuilder<TActor, Stage>(this);
+            return new ActorBuilder<TActor, Stage>(this, _backstage);
         }
 
         ActorBuilder<TActor, IDirector> IDirector.AddActor<TActor>() {
-            return new ActorBuilder<TActor, IDirector>(this);
-        }
-    }
-
-    public class ActorBuilder<TActor, TOrigin> where TOrigin : IDirector {
-        protected readonly TOrigin _origin;
-
-        public ActorBuilder(TOrigin origin) {
-            _origin = origin;
-            throw new NotImplementedException();
+            return new ActorBuilder<TActor, IDirector>(this,_backstage);
         }
 
-        public TOrigin BuildWithMessageTransport(Func<IMessageTransport, TActor> builder) {
-            return _origin;
-        }
-        public TOrigin BuildWithExpressionTransport(Func<IExpressionTransport, TActor> builder) {
-            return _origin;
-        }
-        public TOrigin BuildWithCombinedTransport(Func<ICombinedTransport, TActor> builder) {
-            return _origin;
+        public void Dispose() {
         }
 
-        public ActorBuilderWithMeta<TActor, TOrigin> WithId(string id) {
-            return new ActorBuilderWithMeta<TActor, TOrigin>(_origin, id);
-        }
-
-        public TOrigin Build() {
-            return _origin;
-        }
-    }
-
-    public class ActorBuilderWithMeta<TActor, TOrigin> : ActorBuilder<TActor, TOrigin> where TOrigin : IDirector {
-        private readonly MessageMeta _meta;
-
-        public ActorBuilderWithMeta(TOrigin origin, string id)
-            : base(origin) {
-            _meta = new MessageMeta(id, typeof(TActor));
-        }
-        public TOrigin BuildWithMessageTransport(Func<IMessageTransport, MessageMeta, TActor> builder) {
-            return _origin;
-        }
-        public TOrigin BuildWithExpressionTransport(Func<IExpressionTransport, MessageMeta, TActor> builder) {
-            return _origin;
-        }
-        public TOrigin BuildWithCombinedTransport(Func<ICombinedTransport, MessageMeta, TActor> builder) {
-            return _origin;
-        }
     }
 }

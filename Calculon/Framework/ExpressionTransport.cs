@@ -23,47 +23,47 @@ namespace Droog.Calculon.Framework {
     public class ExpressionTransport : IExpressionTransport {
 
         private readonly IDispatcher _dispatcher;
-        private readonly MessageMeta _sender;
+        private readonly ActorAddress _sender;
 
-        public ExpressionTransport(string senderId, Type senderType, IDispatcher dispatcher) {
+        public ExpressionTransport(ActorAddress sender, IDispatcher dispatcher) {
             _dispatcher = dispatcher;
-            _sender = new MessageMeta(senderId, senderType);
+            _sender = sender;
         }
 
         public void Send<TRecipient>(Expression<Action<TRecipient>> message) {
-            _dispatcher.Dispatch(new ExpressionActionMessage<TRecipient>(_sender.For<TRecipient>(), message));
+            _dispatcher.Dispatch(new ExpressionActionMessage<TRecipient>(_sender.To<TRecipient>(), message));
         }
 
         public void Send<TRecipient>(Expression<Action<TRecipient, MessageMeta>> message) {
-            _dispatcher.Dispatch(new ExpressionActionMessageWithMeta<TRecipient>(_sender.For<TRecipient>(), message));
+            _dispatcher.Dispatch(new ExpressionActionMessageWithMeta<TRecipient>(_sender.To<TRecipient>(), message));
         }
 
         public Result SendAndReceive<TRecipient>(Expression<Action<TRecipient>> message) {
             var r = new Result();
-            _dispatcher.Dispatch(new ExpressionActionMessage<TRecipient>(_sender.For<TRecipient>(), message, r));
+            _dispatcher.Dispatch(new ExpressionActionMessage<TRecipient>(_sender.To<TRecipient>(), message, r));
             return r;
         }
 
         public Result SendAndReceive<TRecipient>(Expression<Action<TRecipient, MessageMeta>> message) {
             var r = new Result();
-            _dispatcher.Dispatch(new ExpressionActionMessageWithMeta<TRecipient>(_sender.For<TRecipient>(), message, r));
+            _dispatcher.Dispatch(new ExpressionActionMessageWithMeta<TRecipient>(_sender.To<TRecipient>(), message, r));
             return r;
         }
 
         public Result<TResponse> SendAndReceive<TRecipient, TResponse>(Expression<Func<TRecipient, TResponse>> message) {
             var r = new Result<TResponse>();
-            _dispatcher.Dispatch(new ExpressionFuncMessage<TRecipient, TResponse>(_sender.For<TRecipient>(), message, r));
+            _dispatcher.Dispatch(new ExpressionFuncMessage<TRecipient, TResponse>(_sender.To<TRecipient>(), message, r));
             return r;
         }
 
         public Result<TResponse> SendAndReceive<TRecipient, TResponse>(Expression<Func<TRecipient, MessageMeta, TResponse>> message) {
             var r = new Result<TResponse>();
-            _dispatcher.Dispatch(new ExpressionFuncMessageWithMeta<TRecipient, TResponse>(_sender.For<TRecipient>(), message, r));
+            _dispatcher.Dispatch(new ExpressionFuncMessageWithMeta<TRecipient, TResponse>(_sender.To<TRecipient>(), message, r));
             return r;
         }
 
         public IAddressedExpressionTransport<TRecipient> For<TRecipient>(string id) {
-            return new AddressedExpressionTransport<TRecipient>(_dispatcher, _sender.For<TRecipient>(id));
+            return new AddressedExpressionTransport<TRecipient>(_dispatcher, _sender.To<TRecipient>(id));
         }
     }
 
@@ -84,13 +84,13 @@ namespace Droog.Calculon.Framework {
             _dispatcher.Dispatch(new ExpressionActionMessageWithMeta<TRecipient>(_meta, message));
         }
 
-        public Result SendAndReceive<TResponse>(Expression<Action<TRecipient>> message) {
+        public Result SendAndReceive(Expression<Action<TRecipient>> message) {
             var r = new Result();
             _dispatcher.Dispatch(new ExpressionActionMessage<TRecipient>(_meta, message, r));
             return r;
         }
 
-        public Result SendAndReceive<TResponse>(Expression<Action<TRecipient, MessageMeta>> message) {
+        public Result SendAndReceive(Expression<Action<TRecipient, MessageMeta>> message) {
             var r = new Result();
             _dispatcher.Dispatch(new ExpressionActionMessageWithMeta<TRecipient>(_meta, message, r));
             return r;

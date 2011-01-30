@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 using System;
-using Droog.Calculon.Framework;
+
 /*
  * Calculon 
  * Copyright (C) 2011 Arne F. Claassen
@@ -34,8 +34,9 @@ using Droog.Calculon.Framework;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-namespace Droog.Calculon {
+namespace Droog.Calculon.Framework {
     public interface IMailbox : IDisposable {
+        ActorAddress Recipient { get; }
         bool Accept<TData>(Message<TData> messager);
         bool IsAlive { get; }
     }

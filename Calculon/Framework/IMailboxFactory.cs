@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-namespace Droog.Calculon {
+namespace Droog.Calculon.Framework {
     public interface IMailboxFactory<TRecipient> {
         IMailbox<TRecipient> CreateMailbox(MessageMeta meta);
     }

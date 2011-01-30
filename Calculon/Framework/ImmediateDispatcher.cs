@@ -32,13 +32,13 @@ namespace Droog.Calculon.Framework {
             var meta = message.Meta;
             IMailbox mbox;
             IMailbox<TRecipient> exprMbox = null;
-            if(!string.IsNullOrEmpty(meta.To)) {
+            if(!string.IsNullOrEmpty(meta.Recipient.Id)) {
                 lock(_addressedMailboxes) {
-                    if(_addressedMailboxes.TryGetValue(meta.To, out mbox)) {
+                    if(_addressedMailboxes.TryGetValue(meta.Recipient.Id, out mbox)) {
                         if(mbox.IsAlive) {
                             exprMbox = mbox as IMailbox<TRecipient>;
                         } else {
-                            _addressedMailboxes.Remove(meta.To);
+                            _addressedMailboxes.Remove(meta.Recipient.Id);
                         }
                     }
                 }
@@ -51,11 +51,11 @@ namespace Droog.Calculon.Framework {
                 }
             }
             lock(_typedMailboxes) {
-                if(_typedMailboxes.TryGetValue(meta.RecipientType, out mbox)) {
+                if(_typedMailboxes.TryGetValue(meta.Recipient.Type, out mbox)) {
                     if(mbox.IsAlive) {
                         exprMbox = mbox as IMailbox<TRecipient>;
                     } else {
-                        _typedMailboxes.Remove(meta.RecipientType);
+                        _typedMailboxes.Remove(meta.Recipient.Type);
                     }
                 }
             }

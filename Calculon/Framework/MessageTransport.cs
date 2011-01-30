@@ -16,16 +16,24 @@
  * limitations under the License.
  */
 using System;
-using System.Linq.Expressions;
 using MindTouch.Tasking;
 
-namespace Droog.Calculon {
-    public interface IAddressedExpressionTransport<TRecipient> {
-        void Send(Expression<Action<TRecipient>> message);
-        void Send(Expression<Action<TRecipient, MessageMeta>> message);
-        Result SendAndReceive(Expression<Action<TRecipient>> message);
-        Result SendAndReceive(Expression<Action<TRecipient, MessageMeta>> message);
-        Result<TResponse> SendAndReceive<TResponse>(Expression<Func<TRecipient, TResponse>> message);
-        Result<TResponse> SendAndReceive<TResponse>(Expression<Func<TRecipient, MessageMeta, TResponse>> message);
+namespace Droog.Calculon.Framework {
+    public class MessageTransport : IMessageTransport {
+        public MessageTransport(ActorAddress address, IDispatcher dispatcher) {
+            
+        }
+
+        public void Send<TMessageData>(TMessageData messageData) {
+            throw new NotImplementedException();
+        }
+
+        public Result<Message<TIn>> SendAndReceive<TOut, TIn>(Message<TOut> message) {
+            throw new NotImplementedException();
+        }
+
+        public IAddressedMessageTransport For(string id) {
+            throw new NotImplementedException();
+        }
     }
 }

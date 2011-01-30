@@ -21,7 +21,7 @@ using System.Linq;
 namespace Droog.Calculon.Framework {
     public class DispatchChain : IDispatcher {
 
-        private IList<IDispatcherLink> _dispatchers = new List<IDispatcherLink>();
+        private readonly IList<IDispatcherLink> _dispatchers = new List<IDispatcherLink>();
 
         public void Dispatch<TData>(Message<TData> message) {
             (from d in _dispatchers where d.Dispatch(message) select d).FirstOrDefault();
