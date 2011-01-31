@@ -19,6 +19,7 @@ using Droog.Calculon.Framework;
 
 namespace Droog.Calculon {
     public interface IDispatcher {
+        void Dispatch(IMessage message);
         void Dispatch<TData>(Message<TData> message);
         void Dispatch<TRecipient>(ExpressionMessage<TRecipient> message);
     }

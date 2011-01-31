@@ -20,7 +20,7 @@ using MindTouch.Tasking;
 namespace Droog.Calculon {
     public interface IMessageTransport {
         void Send<TMessageData>(TMessageData messageData);
-        Result<Message<TIn>> SendAndReceive<TOut, TIn>(Message<TOut> message);
+        Result<TOut> SendAndReceive<TOut, TIn>(TIn messageData);
         IAddressedMessageTransport For(string id);
     }
 }

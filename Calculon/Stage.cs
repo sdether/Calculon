@@ -17,19 +17,21 @@
  */
 using System;
 using Droog.Calculon.Framework;
+using Droog.Calculon.Messages;
 
 namespace Droog.Calculon {
 
     public class Stage : IDirector, IDisposable {
         private readonly ActorAddress _address;
         private readonly ICombinedTransport _transport;
-        private readonly IBackstage _backstage;
+        private readonly ImmediateDispatchBackstage _backstage;
 
-        public Stage() : this(Guid.NewGuid().ToString()) {}
 
-        public Stage(string id) {
-            _address = ActorAddress.Create(id, GetType());
+        public Stage() {
+            _address = ActorAddress.Create(GetType());
             _backstage = new ImmediateDispatchBackstage();
+            _backstage.AddActor<IDirector>(this, _address, 100);
+            _transport = new CombinedTransport(_address, _backstage);
         }
         public ICombinedTransport Transport { get { return _transport; } }
 
@@ -37,8 +39,12 @@ namespace Droog.Calculon {
             return new ActorBuilder<TActor, Stage>(this, _backstage);
         }
 
+        void IDirector.RetireActor(ActorAddress address, MessageMeta meta) {
+            _backstage.Dispatch(new ShutdownMessage(meta.Sender.To(address)));
+        }
+
         ActorBuilder<TActor, IDirector> IDirector.AddActor<TActor>() {
-            return new ActorBuilder<TActor, IDirector>(this,_backstage);
+            return new ActorBuilder<TActor, IDirector>(this, _backstage);
         }
 
         public void Dispose() {

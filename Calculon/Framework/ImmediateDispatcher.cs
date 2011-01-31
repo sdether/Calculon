@@ -24,8 +24,12 @@ namespace Droog.Calculon.Framework {
         private readonly IDictionary<string, IMailbox> _addressedMailboxes = new Dictionary<string, IMailbox>();
         private readonly IDictionary<Type, IMailbox> _typedMailboxes = new Dictionary<Type, IMailbox>();
 
+        public bool Dispatch(IMessage message) {
+            return false;
+        }
+
         public bool Dispatch<TData>(Message<TData> message) {
-            throw new NotImplementedException();
+            return false;
         }
 
         public bool Dispatch<TRecipient>(ExpressionMessage<TRecipient> message) {

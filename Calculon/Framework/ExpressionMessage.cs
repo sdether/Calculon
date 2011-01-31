@@ -30,6 +30,7 @@ namespace Droog.Calculon.Framework {
         public MessageMeta Meta { get { return _meta; } }
 
         public abstract void Invoke(TRecipient recipient);
+        public abstract void Throw(Exception e);
     }
 
     public class ExpressionActionMessage<TRecipient> : ExpressionMessage<TRecipient> {
@@ -59,6 +60,10 @@ namespace Droog.Calculon.Framework {
                     _result.Throw(e);
                 }
             }
+        }
+
+        public override void Throw(Exception e) {
+            _result.Throw(e);
         }
     }
 
@@ -90,6 +95,10 @@ namespace Droog.Calculon.Framework {
                 }
             }
         }
+
+        public override void Throw(Exception e) {
+            _result.Throw(e);
+        }
     }
 
     public class ExpressionFuncMessage<TRecipient, TResponse> : ExpressionMessage<TRecipient> {
@@ -110,6 +119,10 @@ namespace Droog.Calculon.Framework {
                 _result.Throw(e);
             }
         }
+
+        public override void Throw(Exception e) {
+            _result.Throw(e);
+        }
     }
 
     public class ExpressionFuncMessageWithMeta<TRecipient, TResponse> : ExpressionMessage<TRecipient> {
@@ -129,6 +142,10 @@ namespace Droog.Calculon.Framework {
             } catch(Exception e) {
                 _result.Throw(e);
             }
+        }
+
+        public override void Throw(Exception e) {
+            _result.Throw(e);
         }
     }
 }

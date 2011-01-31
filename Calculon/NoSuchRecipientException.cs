@@ -18,21 +18,11 @@
 using System;
 
 namespace Droog.Calculon {
-    public class Message<TData> : IMessage {
-        public Message(TData value, MessageMeta meta) {
-            Value = value;
+    public class NoSuchRecipientException : Exception {
+        public readonly MessageMeta Meta;
+
+        public NoSuchRecipientException(MessageMeta meta) {
             Meta = meta;
         }
-
-        public Message(TData value, MessageMeta meta, Type responseType) {
-            Value = value;
-            Meta = meta;
-            ExpectedResponse = responseType;
-        }
-
-        public TData Value { get; private set; }
-        public MessageMeta Meta { get; private set; }
-        public Type ExpectedResponse { get; private set; }
-        public bool ExpectsResponse { get { return ExpectedResponse != null; } }
     }
 }

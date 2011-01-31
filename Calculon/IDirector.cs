@@ -21,5 +21,6 @@ namespace Droog.Calculon {
 
     public interface IDirector {
         ActorBuilder<TActor, IDirector> AddActor<TActor>();
+        void RetireActor(ActorAddress address, MessageMeta meta);
     }
 }

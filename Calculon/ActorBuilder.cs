@@ -89,7 +89,6 @@ namespace Droog.Calculon {
                 }
             }
             var actor = (TActor)Activator.CreateInstance(actorType, args);
-            var mailbox = new Mailbox<TActor>(_address, actor, _parallelism);
             _backstage.AddActor(actor, _address, _parallelism);
             return _origin;
         }

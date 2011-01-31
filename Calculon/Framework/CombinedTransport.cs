@@ -21,47 +21,52 @@ using MindTouch.Tasking;
 
 namespace Droog.Calculon.Framework {
     public class CombinedTransport : ICombinedTransport {
-        public CombinedTransport(ActorAddress address, IDispatcher dispatcher) {
+        private readonly ExpressionTransport _expressionTransport;
+        private readonly MessageTransport _messageTransport;
+
+        public CombinedTransport(ActorAddress sender, IDispatcher dispatcher) {
+            _expressionTransport = new ExpressionTransport(sender, dispatcher);
+            _messageTransport = new MessageTransport(sender, dispatcher);
         }
 
-        public void Send<TMessageData>(TMessageData messageData) {
-            throw new NotImplementedException();
+        void IMessageTransport.Send<TMessageData>(TMessageData messageData) {
+            _messageTransport.Send(messageData);
         }
 
-        public Result<Message<TIn>> SendAndReceive<TOut, TIn>(Message<TOut> message) {
-            throw new NotImplementedException();
+        Result<TOut> IMessageTransport.SendAndReceive<TOut, TIn>(TIn messageData) {
+            return _messageTransport.SendAndReceive<TOut,TIn>(messageData);
         }
 
-        public IAddressedMessageTransport For(string id) {
-            throw new NotImplementedException();
+        IAddressedMessageTransport IMessageTransport.For(string id) {
+            return _messageTransport.For(id);
         }
 
-        public void Send<TRecipient>(Expression<Action<TRecipient>> message) {
-            throw new NotImplementedException();
+        void IExpressionTransport.Send<TRecipient>(Expression<Action<TRecipient>> message) {
+            _expressionTransport.Send(message);
         }
 
-        public void Send<TRecipient>(Expression<Action<TRecipient, MessageMeta>> message) {
-            throw new NotImplementedException();
+        void IExpressionTransport.Send<TRecipient>(Expression<Action<TRecipient, MessageMeta>> message) {
+            _expressionTransport.Send(message);
         }
 
-        public Result SendAndReceive<TRecipient>(Expression<Action<TRecipient>> message) {
-            throw new NotImplementedException();
+        Result IExpressionTransport.SendAndReceive<TRecipient>(Expression<Action<TRecipient>> message) {
+            return _expressionTransport.SendAndReceive(message);
         }
 
-        public Result SendAndReceive<TRecipient>(Expression<Action<TRecipient, MessageMeta>> message) {
-            throw new NotImplementedException();
+        Result IExpressionTransport.SendAndReceive<TRecipient>(Expression<Action<TRecipient, MessageMeta>> message) {
+            return _expressionTransport.SendAndReceive(message);
         }
 
-        public Result<TResponse> SendAndReceive<TRecipient, TResponse>(Expression<Func<TRecipient, TResponse>> message) {
-            throw new NotImplementedException();
+        Result<TResponse> IExpressionTransport.SendAndReceive<TRecipient, TResponse>(Expression<Func<TRecipient, TResponse>> message) {
+            return _expressionTransport.SendAndReceive(message);
         }
 
-        public Result<TResponse> SendAndReceive<TRecipient, TResponse>(Expression<Func<TRecipient, MessageMeta, TResponse>> message) {
-            throw new NotImplementedException();
+        Result<TResponse> IExpressionTransport.SendAndReceive<TRecipient, TResponse>(Expression<Func<TRecipient, MessageMeta, TResponse>> message) {
+            return _expressionTransport.SendAndReceive(message);
         }
 
-        public IAddressedExpressionTransport<TRecipient> For<TRecipient>(string id) {
-            throw new NotImplementedException();
+        IAddressedExpressionTransport<TRecipient> IExpressionTransport.For<TRecipient>(string id) {
+            return _expressionTransport.For<TRecipient>(id);
         }
     }
 }

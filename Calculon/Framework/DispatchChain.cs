@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -22,6 +23,10 @@ namespace Droog.Calculon.Framework {
     public class DispatchChain : IDispatcher {
 
         private readonly IList<IDispatcherLink> _dispatchers = new List<IDispatcherLink>();
+
+        public void Dispatch(IMessage message) {
+            (from d in _dispatchers where d.Dispatch(message) select d).FirstOrDefault();
+        }
 
         public void Dispatch<TData>(Message<TData> message) {
             (from d in _dispatchers where d.Dispatch(message) select d).FirstOrDefault();

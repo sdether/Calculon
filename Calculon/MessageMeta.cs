@@ -24,6 +24,27 @@ namespace Droog.Calculon {
     }
 
     public class ActorAddress {
+
+        public static ActorAddress Create<T>() {
+            return Create(typeof(T));
+        }
+
+        public static ActorAddress Create<T>(string id) {
+            return Create(id, typeof(T));
+        }
+
+        public static ActorAddress Create(Type type) {
+            return new ActorAddress("__" + Guid.NewGuid(), type, true);
+        }
+
+        public static ActorAddress Create(string id) {
+            return new ActorAddress(id, null, false);
+        }
+
+        public static ActorAddress Create(string id, Type type) {
+            return new ActorAddress(id, type, false);
+        }
+ 
         public readonly string Id;
         public readonly Type Type;
         public readonly bool IsAnonymous;
@@ -56,26 +77,14 @@ namespace Droog.Calculon {
             return new MessageMeta(this, Create(type));
         }
 
-        public static ActorAddress Create<T>() {
-            return Create(typeof(T));
+        public MessageMeta To(ActorAddress address) {
+            return new MessageMeta(this, address);
         }
 
-        public static ActorAddress Create<T>(string id) {
-            return Create(id, typeof(T));
+        public MessageMeta ToUnknown() {
+            return new MessageMeta(this, new ActorAddress(null, null, true));
         }
-
-        public static ActorAddress Create(Type type) {
-            return new ActorAddress("__" + Guid.NewGuid(), type, true);
-        }
-
-        public static ActorAddress Create(string id) {
-            return new ActorAddress(id, null, false);
-        }
-
-        public static ActorAddress Create(string id, Type type) {
-            return new ActorAddress(id, type, false);
-        }
-    }
+   }
 
     public class MessageMeta {
         public readonly ActorAddress Sender;

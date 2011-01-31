@@ -20,15 +20,19 @@ using MindTouch.Tasking;
 
 namespace Droog.Calculon.Framework {
     public class MessageTransport : IMessageTransport {
-        public MessageTransport(ActorAddress address, IDispatcher dispatcher) {
-            
+        private readonly ActorAddress _sender;
+        private readonly IDispatcher _dispatcher;
+
+        public MessageTransport(ActorAddress sender, IDispatcher dispatcher) {
+            _sender = sender;
+            _dispatcher = dispatcher;
         }
 
         public void Send<TMessageData>(TMessageData messageData) {
-            throw new NotImplementedException();
+            _dispatcher.Dispatch(new Message<TMessageData>(messageData,_sender.ToUnknown()));
         }
 
-        public Result<Message<TIn>> SendAndReceive<TOut, TIn>(Message<TOut> message) {
+        public Result<TOut> SendAndReceive<TOut, TIn>(TIn messageData) {
             throw new NotImplementedException();
         }
 

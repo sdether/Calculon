@@ -49,6 +49,31 @@ namespace Droog.Calculon.Framework {
             return new CombinedTransport(address, this);
         }
 
+        public void Dispatch(IMessage message) {
+            var meta = message.Meta;
+            IMailbox mbox;
+
+            // try to dispatch by id
+            if(!string.IsNullOrEmpty(meta.Recipient.Id)) {
+                lock(_mailboxes) {
+                    if(_mailboxes.TryGetValue(meta.Recipient.Id, out mbox)) {
+                        if(!mbox.IsAlive) {
+                            _mailboxes.Remove(meta.Recipient.Id);
+                        }
+                    }
+                }
+                if(mbox.IsAlive) {
+                    try {
+                        if(mbox.Accept(message)) {
+                            return;
+                        }
+                    } catch(MailboxExpiredException) { }
+                }
+            }
+
+            // IMessage doesn't have response handle, so a failure is swallowed
+        }
+
         public void Dispatch<TData>(Message<TData> message) {
             throw new NotImplementedException();
         }
@@ -78,7 +103,7 @@ namespace Droog.Calculon.Framework {
                 }
             }
 
-            // try to dispatch by type of an anonymous recipient mailbox
+            // find anonymous recipient mailboxes
             IMailbox<TRecipient>[] candidates;
             lock(_mailboxes) {
                 candidates = (from candidateMbox in _mailboxes.Values
@@ -86,12 +111,18 @@ namespace Droog.Calculon.Framework {
                               where candidateExprMbox != null && candidateExprMbox.Recipient.IsAnonymous
                               select candidateExprMbox).ToArray();
                 foreach(var dead in candidates.Where(x => !x.IsAlive)) {
+                    dead.Dispose();
                     _mailboxes.Remove(dead.Recipient.Id);
                 }
             }
 
-            // Note: in this test implementation we drop messages that have no one to accept them
-            candidates.Where(x => x.IsAlive).Any(candidate => candidate.Accept(message));
+            // see if any of the candidaes will dispatch the message
+            if(candidates.Where(x => x.IsAlive).Any(candidate => candidate.Accept(message))) {
+                return;
+            }
+
+            // couldn't do anything with the message, throw
+            message.Throw(new NoSuchRecipientException(message.Meta));
         }
     }
 }

@@ -15,12 +15,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+using System;
+
 namespace Droog.Calculon.Framework {
     public class RepositoryDispatcher<TRecipient> : IDispatcherLink {
         private readonly IMailboxRepository<TRecipient> _repository;
 
         public RepositoryDispatcher(IMailboxRepository<TRecipient> repository) {
             _repository = repository;
+        }
+
+        public bool Dispatch(IMessage message) {
+            return false;
         }
 
         public bool Dispatch<TData>(Message<TData> message) {
