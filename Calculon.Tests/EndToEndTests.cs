@@ -31,7 +31,7 @@ namespace Droog.Calculon.Tests {
         [SetUp]
         public void Setup() {
             _stage = new Stage();
-            _stage.AddActor<Origin>().WithId("origin").BuildWithExpressionTransport((t, m) => _origin = new Origin(t, m));
+            _stage.AddActor<Origin>().WithId("origin").Build((t, m) => _origin = new Origin(t, m));
         }
 
         [TearDown]
@@ -42,8 +42,8 @@ namespace Droog.Calculon.Tests {
         [Test]
         public void Fire_and_forget() {
             Recipient actor = null, actorx = null;
-            _stage.AddActor<IRecipient>().WithId("foo").BuildWithExpressionTransport(t => actor = new Recipient());
-            _stage.AddActor<IRecipient>().WithId("baz").BuildWithExpressionTransport(t => actorx = new Recipient());
+            _stage.AddActor<IRecipient>().WithId("foo").Build(t => actor = new Recipient());
+            _stage.AddActor<IRecipient>().WithId("baz").Build(t => actorx = new Recipient());
             _origin.FireAndForget("foo", "bar");
             Assert.IsTrue(actor.Trigger.WaitOne(10.Seconds()));
             Assert.AreEqual("bar", actor.Msg);
@@ -53,8 +53,8 @@ namespace Droog.Calculon.Tests {
         [Test]
         public void Fire_and_forget_with_meta() {
             Recipient actor = null, actorx = null;
-            _stage.AddActor<IRecipient>().WithId("foo").BuildWithExpressionTransport(t => actor = new Recipient());
-            _stage.AddActor<IRecipient>().WithId("baz").BuildWithExpressionTransport(t => actorx = new Recipient());
+            _stage.AddActor<IRecipient>().WithId("foo").Build(t => actor = new Recipient());
+            _stage.AddActor<IRecipient>().WithId("baz").Build(t => actorx = new Recipient());
             _origin.FireAndForget("foo");
             Assert.IsTrue(actor.Trigger.WaitOne(10.Seconds()));
             Assert.AreEqual(_origin.Address.Id, actor.From);
@@ -64,8 +64,8 @@ namespace Droog.Calculon.Tests {
         [Test]
         public void Send_and_block() {
             Recipient actor = null, actorx = null;
-            _stage.AddActor<IRecipient>().WithId("foo").BuildWithExpressionTransport(t => actor = new Recipient());
-            _stage.AddActor<IRecipient>().WithId("baz").BuildWithExpressionTransport(t => actorx = new Recipient());
+            _stage.AddActor<IRecipient>().WithId("foo").Build(t => actor = new Recipient());
+            _stage.AddActor<IRecipient>().WithId("baz").Build(t => actorx = new Recipient());
             _origin.SendAndBlock("foo", "bar");
             Assert.AreEqual("bar", actor.Msg);
             Assert.IsNull(actorx.Msg);
@@ -74,8 +74,8 @@ namespace Droog.Calculon.Tests {
         [Test]
         public void Send_and_block_with_meta() {
             Recipient actor = null, actorx = null;
-            _stage.AddActor<IRecipient>().WithId("foo").BuildWithExpressionTransport(t => actor = new Recipient());
-            _stage.AddActor<IRecipient>().WithId("baz").BuildWithExpressionTransport(t => actorx = new Recipient());
+            _stage.AddActor<IRecipient>().WithId("foo").Build(t => actor = new Recipient());
+            _stage.AddActor<IRecipient>().WithId("baz").Build(t => actorx = new Recipient());
             _origin.SendAndBlock("foo");
             Assert.AreEqual(_origin.Address.Id, actor.From);
             Assert.IsNull(actorx.From);
@@ -84,8 +84,8 @@ namespace Droog.Calculon.Tests {
         [Test]
         public void Send_and_receive_message() {
             Recipient actor = null, actorx = null;
-            _stage.AddActor<IRecipient>().WithId("foo").BuildWithExpressionTransport(t => actor = new Recipient());
-            _stage.AddActor<IRecipient>().WithId("baz").BuildWithExpressionTransport(t => actorx = new Recipient());
+            _stage.AddActor<IRecipient>().WithId("foo").Build(t => actor = new Recipient());
+            _stage.AddActor<IRecipient>().WithId("baz").Build(t => actorx = new Recipient());
             var msg = _origin.SendAndReceive("foo", "bar");
             Assert.AreEqual("bar", msg);
             Assert.AreEqual("bar", actor.Msg);
@@ -95,8 +95,8 @@ namespace Droog.Calculon.Tests {
         [Test]
         public void Send_and_receive_with_meta() {
             Recipient actor = null, actorx = null;
-            _stage.AddActor<IRecipient>().WithId("foo").BuildWithExpressionTransport(t => actor = new Recipient());
-            _stage.AddActor<IRecipient>().WithId("baz").BuildWithExpressionTransport(t => actorx = new Recipient());
+            _stage.AddActor<IRecipient>().WithId("foo").Build(t => actor = new Recipient());
+            _stage.AddActor<IRecipient>().WithId("baz").Build(t => actorx = new Recipient());
             var from = _origin.SendAndReceive("foo");
             Assert.AreEqual(_origin.Address.Id, from);
             Assert.AreEqual(_origin.Address.Id, actor.From);
@@ -113,7 +113,7 @@ namespace Droog.Calculon.Tests {
         [Test]
         public void Can_spawn_actor_via_messaging() {
             _stage.Transport
-                .SendAndReceive<IDirector>(x => x.AddActor<IRecipient>().WithId("foo").BuildWithExpressionTransport(t => new Recipient()))
+                .SendAndReceive<IDirector>(x => x.AddActor<IRecipient>().WithId("foo").Build(t => new Recipient()))
                 .Wait();
             var r = _stage.Transport.For<IRecipient>("foo").SendAndReceive(x => x.Echo("hello")).Block();
             Assert.IsFalse(r.HasException);
@@ -123,7 +123,7 @@ namespace Droog.Calculon.Tests {
         [Test]
         public void Can_shutdown_actor_via_messaging() {
             Recipient actor = null;
-            _stage.AddActor<IRecipient>().WithId("foo").BuildWithExpressionTransport(t => actor = new Recipient());
+            _stage.AddActor<IRecipient>().WithId("foo").Build(t => actor = new Recipient());
             _stage.Transport.SendAndReceive<IDirector>((x, m) => x.RetireActor(ActorAddress.Create<IRecipient>("foo"), m)).Wait();
             var r = _stage.Transport.For<IRecipient>("foo").SendAndReceive(x => x.Echo("hello")).Block();
             Assert.IsTrue(r.HasException);
@@ -136,10 +136,10 @@ namespace Droog.Calculon.Tests {
         }
 
         public class Origin {
-            private readonly IExpressionTransport _transport;
+            private readonly ITransport _transport;
             private readonly ActorAddress _address;
 
-            public Origin(IExpressionTransport transport, ActorAddress address) {
+            public Origin(ITransport transport, ActorAddress address) {
                 _transport = transport;
                 _address = address;
             }

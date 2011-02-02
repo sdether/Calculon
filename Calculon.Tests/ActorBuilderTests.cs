@@ -50,122 +50,46 @@ namespace Droog.Calculon.Tests {
             var actor = _backstage.Get<AddressDependencyActor>();
             Assert.IsNotNull(actor);
             Assert.AreEqual("foo", actor.Address.Id);
+            Assert.AreEqual(typeof(AddressDependencyActor), actor.Address.Type);
         }
 
         [Test]
-        public void Can_build_actor_requiring_expression_transport_with_manual_builder() {
-            AddActor<ExpressionTransportActor>().BuildWithExpressionTransport(t => new ExpressionTransportActor(t));
-            var actor = _backstage.Get<ExpressionTransportActor>();
+        public void Can_build_actor_requiring_transport() {
+            AddActor<TransportDependencyActor>().Build();
+            var actor = _backstage.Get<TransportDependencyActor>();
             Assert.IsNotNull(actor);
             Assert.IsNotNull(actor.Transport);
         }
 
         [Test]
-        public void Address_and_transport_are_injected_for_actor_requiring_expression_transport() {
-            AddActor<ExpressionTransportActor>().Build();
-            var actor = _backstage.Get<ExpressionTransportActor>();
+        public void Can_build_actor_requiring_transport_and_address() {
+            AddActor<TransportAndAddressDependencyActor>().WithId("foo").Build();
+            var actor = _backstage.Get<TransportAndAddressDependencyActor>();
             Assert.IsNotNull(actor);
             Assert.IsNotNull(actor.Transport);
-        }
-
-        [Test]
-        public void Can_build_actor_requiring_expression_transport_and_meta_with_manual_builder() {
-            AddActor<ExpressionTransportActorWithAddress>().WithId("foo").BuildWithExpressionTransport((t, m) => new ExpressionTransportActorWithAddress(t, m));
-            var actor = _backstage.Get<ExpressionTransportActorWithAddress>();
-            Assert.IsNotNull(actor);
-            Assert.IsNotNull(actor.Transport);
-            Assert.IsNotNull(actor.Address);
             Assert.AreEqual("foo", actor.Address.Id);
-            Assert.AreEqual(typeof(ExpressionTransportActorWithAddress), actor.Address.Type);
+            Assert.AreEqual(typeof(TransportAndAddressDependencyActor), actor.Address.Type);
         }
 
         [Test]
-        public void Address_and_transport_are_injected_for_actor_requiring_expression_transport_and_meta() {
-            AddActor<ExpressionTransportActorWithAddress>().WithId("foo").Build();
-            var actor = _backstage.Get<ExpressionTransportActorWithAddress>();
+        public void Can_build_actor_requiring_transport_with_manual_builder() {
+            AddActor<TransportDependencyActor>().Build(t => new TransportDependencyActor(t));
+            var actor = _backstage.Get<TransportDependencyActor>();
             Assert.IsNotNull(actor);
             Assert.IsNotNull(actor.Transport);
-            Assert.IsNotNull(actor.Address);
+        }
+
+        [Test]
+        public void Can_build_actor_requiring_transport_and_address_with_manual_builder() {
+            AddActor<TransportAndAddressDependencyActor>().WithId("foo").Build((t, a) => new TransportAndAddressDependencyActor(t, a));
+            var actor = _backstage.Get<TransportAndAddressDependencyActor>();
+            Assert.IsNotNull(actor);
+            Assert.IsNotNull(actor.Transport);
             Assert.AreEqual("foo", actor.Address.Id);
-            Assert.AreEqual(typeof(ExpressionTransportActorWithAddress), actor.Address.Type);
+            Assert.AreEqual(typeof(TransportAndAddressDependencyActor), actor.Address.Type);
         }
 
-        [Test]
-        public void Can_build_actor_requiring_message_transport_with_manual_builder() {
-            AddActor<MessageTransportActor>().BuildWithMessageTransport(t => new MessageTransportActor(t));
-            var actor = _backstage.Get<MessageTransportActor>();
-            Assert.IsNotNull(actor);
-            Assert.IsNotNull(actor.Transport);
-        }
-
-        [Test]
-        public void Address_and_transport_are_injected_for_actor_requiring_message_transport() {
-            AddActor<MessageTransportActor>().Build();
-            var actor = _backstage.Get<MessageTransportActor>();
-            Assert.IsNotNull(actor);
-            Assert.IsNotNull(actor.Transport);
-        }
-
-        [Test]
-        public void Can_build_actor_requiring_message_transport_and_meta_with_manual_builder() {
-            AddActor<MessageTransportActorWithAddress>().WithId("foo").BuildWithMessageTransport((t, m) => new MessageTransportActorWithAddress(t, m));
-            var actor = _backstage.Get<MessageTransportActorWithAddress>();
-            Assert.IsNotNull(actor);
-            Assert.IsNotNull(actor.Transport);
-            Assert.IsNotNull(actor.Address);
-            Assert.AreEqual("foo", actor.Address.Id);
-            Assert.AreEqual(typeof(MessageTransportActorWithAddress), actor.Address.Type);
-        }
-
-        [Test]
-        public void Address_and_transport_are_injected_for_actor_requiring_message_transport_and_meta() {
-            AddActor<MessageTransportActorWithAddress>().WithId("foo").Build();
-            var actor = _backstage.Get<MessageTransportActorWithAddress>();
-            Assert.IsNotNull(actor);
-            Assert.IsNotNull(actor.Transport);
-            Assert.IsNotNull(actor.Address);
-            Assert.AreEqual("foo", actor.Address.Id);
-            Assert.AreEqual(typeof(MessageTransportActorWithAddress), actor.Address.Type);
-        }
-
-        [Test]
-        public void Can_build_actor_requiring_combined_transport_with_manual_builder() {
-            AddActor<CombinedTransportActor>().BuildWithCombinedTransport(t => new CombinedTransportActor(t));
-            var actor = _backstage.Get<CombinedTransportActor>();
-            Assert.IsNotNull(actor);
-            Assert.IsNotNull(actor.Transport);
-        }
-
-        [Test]
-        public void Address_and_transport_are_injected_for_actor_requiring_combined_transport() {
-            AddActor<CombinedTransportActor>().Build();
-            var actor = _backstage.Get<CombinedTransportActor>();
-            Assert.IsNotNull(actor);
-            Assert.IsNotNull(actor.Transport);
-        }
-
-        [Test]
-        public void Can_build_actor_requiring_combined_transport_and_meta_with_manual_builder() {
-            AddActor<CombinedTransportActorWithAddress>().WithId("foo").BuildWithCombinedTransport((t, m) => new CombinedTransportActorWithAddress(t, m));
-            var actor = _backstage.Get<CombinedTransportActorWithAddress>();
-            Assert.IsNotNull(actor);
-            Assert.IsNotNull(actor.Transport);
-            Assert.IsNotNull(actor.Address);
-            Assert.AreEqual("foo", actor.Address.Id);
-            Assert.AreEqual(typeof(CombinedTransportActorWithAddress), actor.Address.Type);
-        }
-
-        [Test]
-        public void Address_and_transport_are_injected_for_actor_requiring_combined_transport_and_meta() {
-            AddActor<CombinedTransportActorWithAddress>().WithId("foo").Build();
-            var actor = _backstage.Get<CombinedTransportActorWithAddress>();
-            Assert.IsNotNull(actor);
-            Assert.IsNotNull(actor.Transport);
-            Assert.IsNotNull(actor.Address);
-            Assert.AreEqual("foo", actor.Address.Id);
-            Assert.AreEqual(typeof(CombinedTransportActorWithAddress), actor.Address.Type);
-        }
-
+     
         public class NoDependencyActor { }
         public class AddressDependencyActor {
             public ActorAddress Address { get; private set; }
@@ -175,55 +99,20 @@ namespace Droog.Calculon.Tests {
             }
         }
 
-        public class ExpressionTransportActor {
-            public IExpressionTransport Transport { get; private set; }
+        public class TransportDependencyActor {
+            public ITransport Transport { get; private set; }
 
-            public ExpressionTransportActor(IExpressionTransport expressionTransport) {
-                Transport = expressionTransport;
+            public TransportDependencyActor(ITransport transport) {
+                Transport = transport;
             }
         }
 
-        public class ExpressionTransportActorWithAddress {
-            public IExpressionTransport Transport { get; private set; }
+
+        public class TransportAndAddressDependencyActor {
+            public ITransport Transport { get; private set; }
             public ActorAddress Address { get; private set; }
 
-            public ExpressionTransportActorWithAddress(IExpressionTransport transport, ActorAddress address) {
-                Transport = transport;
-                Address = address;
-            }
-        }
-
-        public class MessageTransportActor {
-            public IMessageTransport Transport { get; private set; }
-
-            public MessageTransportActor(IMessageTransport transport) {
-                Transport = transport;
-            }
-        }
-
-        public class MessageTransportActorWithAddress {
-            public IMessageTransport Transport { get; private set; }
-            public ActorAddress Address { get; private set; }
-
-            public MessageTransportActorWithAddress(IMessageTransport transport, ActorAddress address) {
-                Transport = transport;
-                Address = address;
-            }
-        }
-
-        public class CombinedTransportActor {
-            public ICombinedTransport Transport { get; private set; }
-
-            public CombinedTransportActor(ICombinedTransport transport) {
-                Transport = transport;
-            }
-        }
-
-        public class CombinedTransportActorWithAddress {
-            public ICombinedTransport Transport { get; private set; }
-            public ActorAddress Address { get; private set; }
-
-            public CombinedTransportActorWithAddress(ICombinedTransport transport, ActorAddress address) {
+            public TransportAndAddressDependencyActor(ITransport transport, ActorAddress address) {
                 Transport = transport;
                 Address = address;
             }
@@ -235,16 +124,8 @@ namespace Droog.Calculon.Tests {
                 _actor = actor;
             }
 
-            public IExpressionTransport CreateExpressionTransport(ActorAddress address) {
-                return new Mock<IExpressionTransport>().Object;
-            }
-
-            public IMessageTransport CreateMessageTransport(ActorAddress address) {
-                return new Mock<IMessageTransport>().Object;
-            }
-
-            public ICombinedTransport CreateCombinedTransport(ActorAddress address) {
-                return new Mock<ICombinedTransport>().Object;
+            public ITransport CreateTransport(ActorAddress address) {
+                return new Mock<ITransport>().Object;
             }
 
             public T Get<T>() {

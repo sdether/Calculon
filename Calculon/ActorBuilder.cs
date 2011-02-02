@@ -34,24 +34,10 @@ namespace Droog.Calculon {
             _address = ActorAddress.Create<TActor>();
         }
 
-        public TOrigin BuildWithMessageTransport(Func<IMessageTransport, TActor> builder) {
-            var transport = _backstage.CreateMessageTransport(_address);
+        public TOrigin Build(Func<ITransport, TActor> builder) {
+            var transport = _backstage.CreateTransport(_address);
             var actor = builder(transport);
             _backstage.AddActor(actor,_address,_parallelism);
-            return _origin;
-        }
-
-        public TOrigin BuildWithExpressionTransport(Func<IExpressionTransport, TActor> builder) {
-            var transport = _backstage.CreateExpressionTransport(_address);
-            var actor = builder(transport);
-            _backstage.AddActor(actor, _address, _parallelism);
-            return _origin;
-        }
-
-        public TOrigin BuildWithCombinedTransport(Func<ICombinedTransport, TActor> builder) {
-            var transport = _backstage.CreateCombinedTransport(_address);
-            var actor = builder(transport);
-            _backstage.AddActor(actor, _address, _parallelism);
             return _origin;
         }
 
@@ -78,12 +64,8 @@ namespace Droog.Calculon {
             var args = new object[ctorParameters.Length];
             for(var i = 0; i < ctorParameters.Length; i++) {
                 var pType = ctorParameters[i].ParameterType;
-                if(pType == typeof(IExpressionTransport)) {
-                    args[i] = _backstage.CreateExpressionTransport(_address);
-                } else if(pType == typeof(IMessageTransport)) {
-                    args[i] = _backstage.CreateMessageTransport(_address);
-                } else if(pType == typeof(ICombinedTransport)) {
-                    args[i] = _backstage.CreateCombinedTransport(_address);
+                if(pType == typeof(ITransport)) {
+                    args[i] = _backstage.CreateTransport(_address);
                 } else if(pType == typeof(ActorAddress)) {
                     args[i] = _address;
                 }
@@ -95,9 +77,7 @@ namespace Droog.Calculon {
 
         private static bool CanBuild(IEnumerable<ParameterInfo> parameters) {
             return !(from p in parameters
-                     where typeof(IExpressionTransport) != p.ParameterType
-                        && typeof(IMessageTransport) != p.ParameterType
-                        && typeof(ICombinedTransport) != p.ParameterType
+                     where typeof(ITransport) != p.ParameterType
                         && typeof(ActorAddress) != p.ParameterType
                      select p).Any();
         }

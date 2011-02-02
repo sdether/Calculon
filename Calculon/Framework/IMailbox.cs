@@ -20,12 +20,8 @@ using System;
 namespace Droog.Calculon.Framework {
     public interface IMailbox : IDisposable {
         ActorAddress Recipient { get; }
+        bool CanAccept(MessageMeta meta);
         bool Accept(IMessage message);
-        bool Accept<TData>(Message<TData> message);
         bool IsAlive { get; }
-    }
-
-    public interface IMailbox<TRecipient> : IMailbox {
-        bool Accept(ExpressionMessage<TRecipient> message);
     }
 }

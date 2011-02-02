@@ -26,22 +26,8 @@ namespace Droog.Calculon {
             _address = ActorAddress.Create<TActor>(id);
         }
 
-        public TOrigin BuildWithMessageTransport(Func<IMessageTransport, ActorAddress, TActor> builder) {
-            var transport = _backstage.CreateMessageTransport(_address);
-            var actor = builder(transport, _address);
-            _backstage.AddActor(actor, _address, _parallelism);
-            return _origin;
-        }
-
-        public TOrigin BuildWithExpressionTransport(Func<IExpressionTransport, ActorAddress, TActor> builder) {
-            var transport = _backstage.CreateExpressionTransport(_address);
-            var actor = builder(transport, _address);
-            _backstage.AddActor(actor, _address, _parallelism);
-            return _origin;
-        }
-
-        public TOrigin BuildWithCombinedTransport(Func<ICombinedTransport, ActorAddress, TActor> builder) {
-            var transport = _backstage.CreateCombinedTransport(_address);
+        public TOrigin Build(Func<ITransport, ActorAddress, TActor> builder) {
+            var transport = _backstage.CreateTransport(_address);
             var actor = builder(transport, _address);
             _backstage.AddActor(actor, _address, _parallelism);
             return _origin;

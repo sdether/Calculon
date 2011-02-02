@@ -37,16 +37,8 @@ namespace Droog.Calculon.Framework {
             }
         }
 
-        public IExpressionTransport CreateExpressionTransport(ActorAddress address) {
-            return new ExpressionTransport(address, this);
-        }
-
-        public IMessageTransport CreateMessageTransport(ActorAddress address) {
-            return new MessageTransport(address, this);
-        }
-
-        public ICombinedTransport CreateCombinedTransport(ActorAddress address) {
-            return new CombinedTransport(address, this);
+        public ITransport CreateTransport(ActorAddress address) {
+            return new Transport(address, this);
         }
 
         public void Dispatch(IMessage message) {
@@ -62,7 +54,7 @@ namespace Droog.Calculon.Framework {
                         }
                     }
                 }
-                if(mbox.IsAlive) {
+                if(mbox != null && mbox.IsAlive) {
                     try {
                         if(mbox.Accept(message)) {
                             return;
@@ -70,50 +62,11 @@ namespace Droog.Calculon.Framework {
                     } catch(MailboxExpiredException) { }
                 }
             }
-
-            // IMessage doesn't have response handle, so a failure is swallowed
-        }
-
-        public void Dispatch<TData>(Message<TData> message) {
-            throw new NotImplementedException();
-        }
-
-        public void Dispatch<TRecipient>(ExpressionMessage<TRecipient> message) {
-            var meta = message.Meta;
-            IMailbox mbox;
-            IMailbox<TRecipient> exprMbox = null;
-
-            // try to dispatch by id
-            if(!string.IsNullOrEmpty(meta.Recipient.Id)) {
-                lock(_mailboxes) {
-                    if(_mailboxes.TryGetValue(meta.Recipient.Id, out mbox)) {
-                        if(mbox.IsAlive) {
-                            exprMbox = mbox as IMailbox<TRecipient>;
-                        } else {
-                            _mailboxes.Remove(meta.Recipient.Id);
-                        }
-                    }
-                }
-                if(exprMbox != null) {
-                    try {
-                        if(exprMbox.Accept(message)) {
-                            return;
-                        }
-                    } catch(MailboxExpiredException) { }
-                }
-            }
-
-            // find anonymous recipient mailboxes
-            IMailbox<TRecipient>[] candidates;
+            IMailbox[] candidates;
             lock(_mailboxes) {
                 candidates = (from candidateMbox in _mailboxes.Values
-                              let candidateExprMbox = candidateMbox as IMailbox<TRecipient>
-                              where candidateExprMbox != null && candidateExprMbox.Recipient.IsAnonymous
-                              select candidateExprMbox).ToArray();
-                foreach(var dead in candidates.Where(x => !x.IsAlive)) {
-                    dead.Dispose();
-                    _mailboxes.Remove(dead.Recipient.Id);
-                }
+                              where candidateMbox.CanAccept(meta)
+                              select candidateMbox).ToArray();
             }
 
             // see if any of the candidaes will dispatch the message
@@ -121,8 +74,24 @@ namespace Droog.Calculon.Framework {
                 return;
             }
 
-            // couldn't do anything with the message, throw
-            message.Throw(new NoSuchRecipientException(message.Meta));
+            // couldn't do anything with the message, mark message
+            message.Undeliverable();
+        }
+    }
+
+    public class Transport : ITransport {
+        private readonly ActorAddress _address;
+        private readonly IDispatcher _dispatcher;
+
+        public Transport(ActorAddress address, IDispatcher dispatcher) {
+            _address = address;
+            _dispatcher = dispatcher;
+        }
+
+        public ActorAddress Sender { get { return _address; } }
+
+        public void Send(IMessage message) {
+            _dispatcher.Dispatch(message);
         }
     }
 }

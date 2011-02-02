@@ -20,7 +20,7 @@ using Droog.Calculon.Messages;
 using MindTouch.Collections;
 
 namespace Droog.Calculon.Framework {
-    public class Mailbox<TRecipient> : IMailbox<TRecipient> {
+    public class Mailbox<TRecipient> : IMailbox {
 
         private readonly ProcessingQueue<ExpressionMessage<TRecipient>> _queue;
         private readonly ActorAddress _address;
@@ -33,16 +33,21 @@ namespace Droog.Calculon.Framework {
             _queue = new ProcessingQueue<ExpressionMessage<TRecipient>>(Dispatch, parallelism);
         }
 
-        public bool Accept(ExpressionMessage<TRecipient> message) {
-            _queue.TryEnqueue(message);
-            return true;
-        }
-
         private void Dispatch(ExpressionMessage<TRecipient> message) {
             message.Invoke(_recipient);
         }
 
         public ActorAddress Recipient { get { return _address; } }
+
+        public bool CanAccept(MessageMeta meta) {
+            if(meta.MessageType == typeof(ExpressionMessage<TRecipient>)) {
+                return true;
+            }
+            if(meta.MessageType == typeof(ShutdownMessage)) {
+                return true;
+            }
+            return false;
+        }
 
         public bool Accept(IMessage message) {
             if(message is ShutdownMessage) {
@@ -53,10 +58,11 @@ namespace Droog.Calculon.Framework {
                 _isAlive = false;
                 return true;
             }
-            return false;
-        }
-
-        public bool Accept<TData>(Message<TData> message) {
+            var expressionMessage = message as ExpressionMessage<TRecipient>;
+            if(expressionMessage != null) {
+                _queue.TryEnqueue(expressionMessage);
+                return true;
+            }
             return false;
         }
 

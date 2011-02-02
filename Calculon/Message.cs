@@ -19,14 +19,14 @@ using System;
 
 namespace Droog.Calculon {
     public class Message<TData> : IMessage {
-        public Message(TData value, MessageMeta meta) {
+        public Message(TData value, ActorAddress sender, ActorAddress recipient) {
             Value = value;
-            Meta = meta;
+            Meta = new MessageMeta(typeof(Message<TData>), sender, recipient);
         }
 
-        public Message(TData value, MessageMeta meta, Type responseType) {
+        public Message(TData value, ActorAddress sender, ActorAddress recipient, Type responseType) {
             Value = value;
-            Meta = meta;
+            Meta = new MessageMeta(typeof(Message<TData>), sender, recipient);
             ExpectedResponse = responseType;
         }
 
@@ -34,5 +34,7 @@ namespace Droog.Calculon {
         public MessageMeta Meta { get; private set; }
         public Type ExpectedResponse { get; private set; }
         public bool ExpectsResponse { get { return ExpectedResponse != null; } }
+
+        public void Undeliverable() { }
     }
 }

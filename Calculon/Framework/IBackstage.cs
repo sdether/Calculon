@@ -18,8 +18,6 @@
 namespace Droog.Calculon.Framework {
     public interface IBackstage {
         void AddActor<TActor>(TActor actor, ActorAddress address, int parallelism);
-        IExpressionTransport CreateExpressionTransport(ActorAddress address);
-        IMessageTransport CreateMessageTransport(ActorAddress address);
-        ICombinedTransport CreateCombinedTransport(ActorAddress address);
+        ITransport CreateTransport(ActorAddress address);
     }
 }

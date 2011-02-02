@@ -23,11 +23,13 @@ namespace Droog.Calculon.Framework {
     public abstract class ExpressionMessage<TRecipient> : IMessage {
         private readonly MessageMeta _meta;
 
-        protected ExpressionMessage(MessageMeta meta) {
-            _meta = meta;
+        protected ExpressionMessage(ActorAddress sender, ActorAddress recipient) {
+            _meta = new MessageMeta(typeof(ExpressionMessage<TRecipient>), sender, recipient);
         }
 
         public MessageMeta Meta { get { return _meta; } }
+
+        public void Undeliverable() { Throw(new NoSuchRecipientException(Meta)); }
 
         public abstract void Invoke(TRecipient recipient);
         public abstract void Throw(Exception e);
@@ -38,14 +40,14 @@ namespace Droog.Calculon.Framework {
         private readonly Expression<Action<TRecipient>> _expression;
         private readonly Result _result;
 
-        public ExpressionActionMessage(MessageMeta meta, Expression<Action<TRecipient>> expression, Result result)
-            : base(meta) {
+        public ExpressionActionMessage(ActorAddress sender, ActorAddress recipient, Expression<Action<TRecipient>> expression, Result result)
+            : base(sender, recipient) {
             _expression = expression;
             _result = result;
         }
 
-        public ExpressionActionMessage(MessageMeta meta, Expression<Action<TRecipient>> expression)
-            : base(meta) {
+        public ExpressionActionMessage(ActorAddress sender, ActorAddress recipient, Expression<Action<TRecipient>> expression)
+            : base(sender, recipient) {
             _expression = expression;
         }
 
@@ -72,14 +74,14 @@ namespace Droog.Calculon.Framework {
         private readonly Expression<Action<TRecipient, MessageMeta>> _expression;
         private readonly Result _result;
 
-        public ExpressionActionMessageWithMeta(MessageMeta meta, Expression<Action<TRecipient, MessageMeta>> expression, Result result)
-            : base(meta) {
+        public ExpressionActionMessageWithMeta(ActorAddress sender, ActorAddress recipient, Expression<Action<TRecipient, MessageMeta>> expression, Result result)
+            : base(sender, recipient) {
             _expression = expression;
             _result = result;
         }
 
-        public ExpressionActionMessageWithMeta(MessageMeta meta, Expression<Action<TRecipient, MessageMeta>> expression)
-            : base(meta) {
+        public ExpressionActionMessageWithMeta(ActorAddress sender, ActorAddress recipient, Expression<Action<TRecipient, MessageMeta>> expression)
+            : base(sender, recipient) {
             _expression = expression;
         }
 
@@ -106,8 +108,8 @@ namespace Droog.Calculon.Framework {
         private readonly Expression<Func<TRecipient, TResponse>> _expression;
         private readonly Result<TResponse> _result;
 
-        public ExpressionFuncMessage(MessageMeta meta, Expression<Func<TRecipient, TResponse>> expression, Result<TResponse> result)
-            : base(meta) {
+        public ExpressionFuncMessage(ActorAddress sender, ActorAddress recipient, Expression<Func<TRecipient, TResponse>> expression, Result<TResponse> result)
+            : base(sender, recipient) {
             _expression = expression;
             _result = result;
         }
@@ -130,8 +132,8 @@ namespace Droog.Calculon.Framework {
         private readonly Expression<Func<TRecipient, MessageMeta, TResponse>> _expression;
         private readonly Result<TResponse> _result;
 
-        public ExpressionFuncMessageWithMeta(MessageMeta meta, Expression<Func<TRecipient, MessageMeta, TResponse>> expression, Result<TResponse> result)
-            : base(meta) {
+        public ExpressionFuncMessageWithMeta(ActorAddress sender, ActorAddress recipient, Expression<Func<TRecipient, MessageMeta, TResponse>> expression, Result<TResponse> result)
+            : base(sender, recipient) {
             _expression = expression;
             _result = result;
         }

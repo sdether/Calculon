@@ -18,85 +18,19 @@
 using System;
 
 namespace Droog.Calculon {
-
-    public interface IMessage {
-        MessageMeta Meta { get; }
-    }
-
-    public class ActorAddress {
-
-        public static ActorAddress Create<T>() {
-            return Create(typeof(T));
-        }
-
-        public static ActorAddress Create<T>(string id) {
-            return Create(id, typeof(T));
-        }
-
-        public static ActorAddress Create(Type type) {
-            return new ActorAddress("__" + Guid.NewGuid(), type, true);
-        }
-
-        public static ActorAddress Create(string id) {
-            return new ActorAddress(id, null, false);
-        }
-
-        public static ActorAddress Create(string id, Type type) {
-            return new ActorAddress(id, type, false);
-        }
- 
-        public readonly string Id;
-        public readonly Type Type;
-        public readonly bool IsAnonymous;
-        public readonly bool IsUntyped;
-
-        private ActorAddress(string id, Type type, bool isAnonymous) {
-            Id = id;
-            Type = type;
-            IsAnonymous = isAnonymous;
-            IsUntyped = Type == null;
-        }
-
-        public MessageMeta To<T>() {
-            return new MessageMeta(this, Create<T>());
-        }
-
-        public MessageMeta To<T>(string id) {
-            return new MessageMeta(this, Create<T>(id));
-        }
-
-        public MessageMeta To(string id) {
-            return new MessageMeta(this, Create(id));
-        }
-
-        public MessageMeta To(string id, Type type) {
-            return new MessageMeta(this, Create(id, type));
-        }
-
-        public MessageMeta To(Type type) {
-            return new MessageMeta(this, Create(type));
-        }
-
-        public MessageMeta To(ActorAddress address) {
-            return new MessageMeta(this, address);
-        }
-
-        public MessageMeta ToUnknown() {
-            return new MessageMeta(this, new ActorAddress(null, null, true));
-        }
-   }
-
     public class MessageMeta {
         public readonly ActorAddress Sender;
         public readonly ActorAddress Recipient;
+        public readonly Type MessageType;
 
-        public MessageMeta(ActorAddress sender, ActorAddress recipient) {
+        public MessageMeta(Type type, ActorAddress sender, ActorAddress recipient) {
+            MessageType = type;
             Sender = sender;
             Recipient = recipient;
         }
 
-        public MessageMeta Reply() {
-            return new MessageMeta(Recipient, Sender);
+        public MessageMeta Reply<TMessage>() {
+            return new MessageMeta(typeof(TMessage), Recipient, Sender);
         }
     }
 }

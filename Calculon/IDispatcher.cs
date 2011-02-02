@@ -15,12 +15,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-using Droog.Calculon.Framework;
-
 namespace Droog.Calculon {
     public interface IDispatcher {
         void Dispatch(IMessage message);
-        void Dispatch<TData>(Message<TData> message);
-        void Dispatch<TRecipient>(ExpressionMessage<TRecipient> message);
     }
 }
