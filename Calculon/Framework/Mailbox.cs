@@ -68,6 +68,8 @@ namespace Droog.Calculon.Framework {
 
         public bool IsAlive {get { return _isAlive; }}
 
-        public void Dispose() {}
+        public void Dispose() {
+            _isAlive = false;
+        }
     }
 }

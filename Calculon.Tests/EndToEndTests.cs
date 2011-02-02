@@ -16,6 +16,7 @@
  * limitations under the License.
  */
 using System;
+using System.Linq.Expressions;
 using System.Threading;
 using Droog.Calculon.Framework;
 using NUnit.Framework;
@@ -133,42 +134,66 @@ namespace Droog.Calculon.Tests {
 
         [Test]
         public void Can_spawn_actors_on_demand() {
+            _stage.AddActor<RecipientFactory>().Build();
+            var r = _stage.Transport.For<IRecipient>("foo").SendAndReceive(x => x.Echo("hello")).Block();
+            Assert.IsFalse(r.HasException);
+            Assert.AreEqual("hello", r.Value);
+        }
+    }
+
+
+    public class Origin {
+        private readonly ITransport _transport;
+        private readonly ActorAddress _address;
+
+        public Origin(ITransport transport, ActorAddress address) {
+            _transport = transport;
+            _address = address;
         }
 
-        public class Origin {
-            private readonly ITransport _transport;
-            private readonly ActorAddress _address;
+        public ActorAddress Address { get { return _address; } }
 
-            public Origin(ITransport transport, ActorAddress address) {
-                _transport = transport;
-                _address = address;
-            }
+        public void FireAndForget(string id, string msg) {
+            _transport.For<IRecipient>(id).Send(x => x.Receive(msg));
+        }
 
-            public ActorAddress Address { get { return _address; } }
+        public void FireAndForget(string id) {
+            _transport.For<IRecipient>(id).Send((x, m) => x.Receive(m));
+        }
 
-            public void FireAndForget(string id, string msg) {
-                _transport.For<IRecipient>(id).Send(x => x.Receive(msg));
-            }
+        public void SendAndBlock(string id, string msg) {
+            _transport.For<IRecipient>(id).SendAndReceive(x => x.Receive(msg)).Wait();
+        }
 
-            public void FireAndForget(string id) {
-                _transport.For<IRecipient>(id).Send((x, m) => x.Receive(m));
-            }
+        public void SendAndBlock(string id) {
+            _transport.For<IRecipient>(id).SendAndReceive((x, m) => x.Receive(m)).Wait();
+        }
 
-            public void SendAndBlock(string id, string msg) {
-                _transport.For<IRecipient>(id).SendAndReceive(x => x.Receive(msg)).Wait();
-            }
+        public string SendAndReceive(string id, string echo) {
+            return _transport.For<IRecipient>(id).SendAndReceive(x => x.Echo(echo)).Wait();
+        }
 
-            public void SendAndBlock(string id) {
-                _transport.For<IRecipient>(id).SendAndReceive((x, m) => x.Receive(m)).Wait();
-            }
+        public string SendAndReceive(string id) {
+            return _transport.For<IRecipient>(id).SendAndReceive((x, m) => x.Echo(m)).Wait();
+        }
+    }
 
-            public string SendAndReceive(string id, string echo) {
-                return _transport.For<IRecipient>(id).SendAndReceive(x => x.Echo(echo)).Wait();
-            }
+    public class RecipientFactory : IPatternMatchingActor {
+        private readonly ITransport _transport;
 
-            public string SendAndReceive(string id) {
-                return _transport.For<IRecipient>(id).SendAndReceive((x, m) => x.Echo(m)).Wait();
-            }
+        public RecipientFactory(ITransport transport) {
+            _transport = transport;
+        }
+
+        public Expression<Func<MessageMeta, bool>> AcceptCriteria {
+            get { return m => typeof(IRecipient).IsAssignableFrom(m.Recipient.Type); }
+        }
+
+        public void Receive(IMessage message) {
+            _transport
+                .SendAndReceive<IDirector>(x => x.AddActor<IRecipient>().WithId(message.Meta.Recipient.Id).Build(t => new Recipient()))
+                .Wait();
+            _transport.Send(message);
         }
     }
 

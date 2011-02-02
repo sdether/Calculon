@@ -31,7 +31,14 @@ namespace Droog.Calculon.Framework {
         private readonly IDictionary<string, IMailbox> _mailboxes = new Dictionary<string, IMailbox>();
 
         public void AddActor<TActor>(TActor actor, ActorAddress address, int parallelism) {
-            var mailbox = new Mailbox<TActor>(address, actor, parallelism);
+            
+            // TODO: total hack.. A mailbox<T> should be able to handle IPatternMatchingActors as well
+            IMailbox mailbox;
+            if(typeof(IPatternMatchingActor).IsAssignableFrom(actor.GetType())) {
+                mailbox = new PatternMatchingMailbox(address, actor as IPatternMatchingActor, parallelism);
+            } else {
+                mailbox = new Mailbox<TActor>(address, actor, parallelism);
+            }
             lock(_mailboxes) {
                 _mailboxes[mailbox.Recipient.Id] = mailbox;
             }
@@ -76,22 +83,6 @@ namespace Droog.Calculon.Framework {
 
             // couldn't do anything with the message, mark message
             message.Undeliverable();
-        }
-    }
-
-    public class Transport : ITransport {
-        private readonly ActorAddress _address;
-        private readonly IDispatcher _dispatcher;
-
-        public Transport(ActorAddress address, IDispatcher dispatcher) {
-            _address = address;
-            _dispatcher = dispatcher;
-        }
-
-        public ActorAddress Sender { get { return _address; } }
-
-        public void Send(IMessage message) {
-            _dispatcher.Dispatch(message);
         }
     }
 }
