@@ -2,7 +2,6 @@ C:\github\Calculon\Calculon.Tests\bin\Debug\Droog.Calculon.Tests.dll
 C:\github\Calculon\Calculon.Tests\bin\Debug\Droog.Calculon.Tests.pdb
 C:\github\Calculon\Calculon.Tests\bin\Debug\Droog.Calculon.dll
 C:\github\Calculon\Calculon.Tests\bin\Debug\log4net.dll
-C:\github\Calculon\Calculon.Tests\bin\Debug\mindtouch.dream.dll
 C:\github\Calculon\Calculon.Tests\bin\Debug\Moq.dll
 C:\github\Calculon\Calculon.Tests\bin\Debug\nunit.framework.dll
 C:\github\Calculon\Calculon.Tests\bin\Debug\Droog.Calculon.pdb

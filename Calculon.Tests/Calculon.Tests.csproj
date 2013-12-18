@@ -66,11 +66,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ActorBuilderTests.cs" />
-    <Compile Include="EndToEndTests.cs" />
-    <Compile Include="ExpressionMessageTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="TaskTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Calculon\Calculon.csproj">

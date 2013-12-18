@@ -36,9 +36,8 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="mindtouch.dream, Version=2.1.6.24536, Culture=neutral, PublicKeyToken=b17e0197b56911d2, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\redist\mindtouch.dream.dll</HintPath>
+    <Reference Include="Castle.Core">
+      <HintPath>..\redist\Castle.Core.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core">
@@ -54,33 +53,14 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ActorAddress.cs" />
-    <Compile Include="ActorBuilder.cs" />
-    <Compile Include="ActorBuilderWithMeta.cs" />
-    <Compile Include="Framework\ParallelTaskScheduler.cs" />
-    <Compile Include="Framework\PatternMatchingMailbox.cs" />
-    <Compile Include="Framework\StageTaskScheduler.cs" />
-    <Compile Include="Framework\Transport.cs" />
-    <Compile Include="Framework\TransportEx.cs" />
-    <Compile Include="Framework\ImmediateDispatchBackstage.cs" />
-    <Compile Include="Framework\IBackstage.cs" />
-    <Compile Include="IMessage.cs" />
-    <Compile Include="IPatternMatchingActor.cs" />
-    <Compile Include="ITransport.cs" />
-    <Compile Include="Messages\ShutdownMessage.cs" />
-    <Compile Include="NoSuchRecipientException.cs" />
-    <Compile Include="IDirector.cs" />
-    <Compile Include="Framework\ExpressionMessage.cs" />
-    <Compile Include="Framework\AddressedExpressionTransport.cs" />
-    <Compile Include="NoDispatcherAvailableExecption.cs" />
-    <Compile Include="IDispatcher.cs" />
-    <Compile Include="MailboxExpiredException.cs" />
-    <Compile Include="IAddressedExpressionTransport.cs" />
-    <Compile Include="IAddressedMessageTransport.cs" />
-    <Compile Include="Framework\IMailbox.cs" />
-    <Compile Include="Framework\Mailbox.cs" />
-    <Compile Include="Message.cs" />
-    <Compile Include="MessageMeta.cs" />
+    <Compile Include="Backstage\IBackstage.cs" />
+    <Compile Include="Backstage\Mailbox.cs" />
+    <Compile Include="Backstage\Message.cs" />
+    <Compile Include="Stagehands\ActorRef.cs" />
+    <Compile Include="IActor.cs" />
+    <Compile Include="IActorRef.cs" />
+    <Compile Include="IScene.cs" />
+    <Compile Include="IStage.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Stage.cs" />
   </ItemGroup>

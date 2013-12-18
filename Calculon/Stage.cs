@@ -1,54 +1,55 @@
-﻿/*
- * Calculon 
- * Copyright (C) 2011 Arne F. Claassen
- * http://www.claassen.net/geek/blog geekblog [at] claassen [dot] net
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * 
- *     http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-using System;
-using Droog.Calculon.Framework;
-using Droog.Calculon.Messages;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq.Expressions;
+using System.Threading.Tasks;
+using Droog.Calculon.Backstage;
 
 namespace Droog.Calculon {
+    public class Stage : IStage, IBackstage {
+        readonly Dictionary<string, Mailbox> _mailboxes = new Dictionary<string, Mailbox>();
 
-    public class Stage : IDirector, IDisposable {
-        private readonly ActorAddress _address;
-        private readonly ITransport _transport;
-        private readonly ImmediateDispatchBackstage _backstage;
-
-
-        public Stage() {
-            _address = ActorAddress.Create(GetType());
-            _backstage = new ImmediateDispatchBackstage();
-            _backstage.AddActor<IDirector>(this, _address, 100);
-            _transport = _backstage.CreateTransport(_address);
-        }
-        public ITransport Transport { get { return _transport; } }
-
-        public ActorBuilder<TActor, Stage> AddActor<TActor>() {
-            return new ActorBuilder<TActor, Stage>(this, _backstage);
+        public IActorRef Find(string address) {
+            Mailbox actor;
+            return !_mailboxes.TryGetValue(address, out actor)
+                ? new ActorRef(this, address, typeof(Void))
+                : actor.Ref;
         }
 
-        void IDirector.RetireActor(ActorAddress address, MessageMeta meta) {
-            _backstage.Dispatch(new ShutdownMessage(meta.Sender, address));
+        public IActorRef GetRef(object actor) {
+            throw new NotImplementedException();
         }
 
-        ActorBuilder<TActor, IDirector> IDirector.AddActor<TActor>() {
-            return new ActorBuilder<TActor, IDirector>(this, _backstage);
+        public T Create<T>(string address) where T : class {
+            var actor = _mailboxes[address] = new Actor {
+                Ref = new ActorRef(this, address, typeof(T)),
+                Instance = Activator.CreateInstance<T>() as IActor,
+                Mailbox = new Mailbox()
+            };
+            return actor.Proxy as T;
         }
 
-        public void Dispose() {
+        T IStage.Get<T>(string address) {
+            throw new NotImplementedException();
         }
 
+        T IStage.Get<T>(IActorRef actorRef) {
+            throw new NotImplementedException();
+        }
+
+        public T Get<T>(string address) {
+            throw new NotImplementedException();
+        }
+
+        public T Get<T>(IActorRef actorRef) {
+            throw new NotImplementedException();
+        }
+
+        public Task<TResult> Send<TActor, TResult>(string address, Expression<Func<TActor, Task<TResult>>> expression) {
+            throw new NotImplementedException();
+        }
+
+        public Mailbox GetMailbox(IActorRef sender) {
+            throw new NotImplementedException();
+        }
     }
 }
