@@ -1,7 +1,0 @@
-C:\github\Calculon\Calculon\bin\Debug\Droog.Calculon.dll
-C:\github\Calculon\Calculon\bin\Debug\Droog.Calculon.pdb
-C:\github\Calculon\Calculon\obj\Debug\ResolveAssemblyReference.cache
-C:\github\Calculon\Calculon\obj\Debug\Droog.Calculon.dll
-C:\github\Calculon\Calculon\obj\Debug\Droog.Calculon.pdb
-C:\github\Calculon\Calculon\bin\Debug\Castle.Core.dll
-C:\github\Calculon\Calculon\bin\Debug\Castle.Core.xml
