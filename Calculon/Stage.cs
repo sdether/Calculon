@@ -6,12 +6,18 @@ using Droog.Calculon.Backstage;
 
 namespace Droog.Calculon {
     public class Stage : IStage, IBackstage {
-        readonly Dictionary<string, Mailbox> _mailboxes = new Dictionary<string, Mailbox>();
 
-        public IActorRef Find(string address) {
-            Mailbox actor;
-            return !_mailboxes.TryGetValue(address, out actor)
-                ? new ActorRef(this, address, typeof(Void))
+        private readonly IActorBuilder _builder;
+        private readonly Dictionary<string, IMailbox> _mailboxes = new Dictionary<string, IMailbox>();
+
+        public Stage(IActorBuilder builder) {
+            _builder = builder;
+        }
+
+        public IActorRef Find(string name) {
+            IMailbox actor;
+            return !_mailboxes.TryGetValue(name, out actor)
+                ? new ActorRef(name, typeof(object))
                 : actor.Ref;
         }
 
@@ -19,13 +25,11 @@ namespace Droog.Calculon {
             throw new NotImplementedException();
         }
 
-        public T Create<T>(string address) where T : class {
-            var actor = _mailboxes[address] = new Actor {
-                Ref = new ActorRef(this, address, typeof(T)),
-                Instance = Activator.CreateInstance<T>() as IActor,
-                Mailbox = new Mailbox()
-            };
-            return actor.Proxy as T;
+        public TActor Create<TActor>(string name = null) where TActor : class {
+            name = name ?? "__" + Guid.NewGuid();
+            var mailbox = new Mailbox<TActor>(name,_builder.GetBuilder<TActor>());
+            _mailboxes[mailbox.Ref.Name] = mailbox;
+            return mailbox.Proxy;
         }
 
         T IStage.Get<T>(string address) {
@@ -44,12 +48,8 @@ namespace Droog.Calculon {
             throw new NotImplementedException();
         }
 
-        public Task<TResult> Send<TActor, TResult>(string address, Expression<Func<TActor, Task<TResult>>> expression) {
-            throw new NotImplementedException();
-        }
-
-        public Mailbox GetMailbox(IActorRef sender) {
-            throw new NotImplementedException();
+        public IMailbox GetMailbox(IActorRef sender) {
+            return _mailboxes[sender.Name];
         }
     }
 }

@@ -1,5 +1,4 @@
 using System;
-using System.Linq.Expressions;
 using System.Threading.Tasks;
 
 namespace Droog.Calculon.Backstage {
@@ -7,24 +6,24 @@ namespace Droog.Calculon.Backstage {
 
         private readonly Action<IBackstage, TActor> _action;
 
-        public static Message<TActor> FromExpression<TResult>(Guid id, IActorRef sender, Expression<Func<TActor, Task<TResult>>> expr) {
+        public static Message<TActor> FromExpression<TResult>(Guid id, IActorRef sender, Func<TActor, Task<TResult>> expr) {
             return new Message<TActor>((backstage, actor) => {
-                var r = expr.Compile()(actor);
+                var r = expr(actor);
                 var mailbox = backstage.GetMailbox(sender);
                 mailbox.EnqueueResponseMessage(id, r.Result);
             });
         }
 
-        public static Message<TActor> FromExpression(Guid id, IActorRef sender, Expression<Func<TActor, Task>> expr) {
+        public static Message<TActor> FromExpression(Guid id, IActorRef sender, Func<TActor, Task> expr) {
             return new Message<TActor>((backstage, actor) => {
-                var r = expr.Compile()(actor);
+                var r = expr(actor);
                 var mailbox = backstage.GetMailbox(sender);
                 mailbox.EnqueueResponseMessage(id, 0);
             });
         }
 
-        public static Message<TActor> FromExpression(Guid id, IActorRef sender, Expression<Action<TActor>> expr) {
-            return new Message<TActor>((backstage, actor) => expr.Compile()(actor));
+        public static Message<TActor> FromExpression(Guid id, IActorRef sender, Action<TActor> expr) {
+            return new Message<TActor>((backstage, actor) => expr(actor));
         }
 
         public static Message<TActor> FromResponse<TResult>(TResult result, TaskCompletionSource<TResult> completionSource) {

@@ -1,1 +1,9 @@
 C:\github\Calculon\Sandbox\obj\Debug\ResolveAssemblyReference.cache
+C:\github\Calculon\Sandbox\bin\Debug\Sandbox.dll
+C:\github\Calculon\Sandbox\bin\Debug\Sandbox.pdb
+C:\github\Calculon\Sandbox\bin\Debug\Droog.Calculon.dll
+C:\github\Calculon\Sandbox\bin\Debug\Castle.Core.dll
+C:\github\Calculon\Sandbox\bin\Debug\Droog.Calculon.pdb
+C:\github\Calculon\Sandbox\bin\Debug\Castle.Core.xml
+C:\github\Calculon\Sandbox\obj\Debug\Sandbox.dll
+C:\github\Calculon\Sandbox\obj\Debug\Sandbox.pdb

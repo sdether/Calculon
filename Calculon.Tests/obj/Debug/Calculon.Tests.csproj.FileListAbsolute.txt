@@ -11,3 +11,5 @@ C:\github\Calculon\Calculon.Tests\bin\Debug\Moq.xml
 C:\github\Calculon\Calculon.Tests\obj\Debug\ResolveAssemblyReference.cache
 C:\github\Calculon\Calculon.Tests\obj\Debug\Droog.Calculon.Tests.dll
 C:\github\Calculon\Calculon.Tests\obj\Debug\Droog.Calculon.Tests.pdb
+C:\github\Calculon\Calculon.Tests\bin\Debug\Castle.Core.dll
+C:\github\Calculon\Calculon.Tests\bin\Debug\Castle.Core.xml

@@ -1,8 +1,4 @@
-﻿using System;
-using System.Linq;
-using System.Linq.Expressions;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using Droog.Calculon;
 
 namespace Sandbox {
@@ -13,23 +9,20 @@ namespace Sandbox {
     }
 
 
-    public class Coordinator : IActor<Coordinator> {
-
-        public void TheLongWay() {
-            var t = Scene.Send<IAdder, int>("adder", addr => addr.Add(1, 2));
-        }
+    public class Coordinator : IActor {
 
         public Task<int> Add(int a, int b, int c) {
             var addr = Scene.Create<IAdder>("adder");
+            var completion = new TaskCompletionSource<int>();
             var x = addr.Add(a, b)
                 .ContinueWith(t1 => {
                     addr.Add(t1.Result, c)
                         .ContinueWith(t2 => {
-                            Scene.Return(t2.Result);
+                            completion.SetResult(t2.Result+c);
                             Scene.Shutdown(addr);
                         });
                 });
-            return Scene.ReturnLater<int>();
+            return completion.Task;
         }
 
         public void Fire() {

@@ -1,41 +1,26 @@
 using System;
 using System.Collections.Generic;
-using System.Linq.Expressions;
 using System.Threading.Tasks;
 using Castle.DynamicProxy;
 
 namespace Droog.Calculon.Backstage {
-    public interface IMailbox {
-        IActorRef Ref { get; }
-        void EnqueueResponseMessage<TResult>(Guid id, TResult result);
-        bool IsMailboxFor<TActor>();
-        IMailbox<TActor> As<TActor>() where TActor : class;
-    }
-
-    public interface IMailbox<TActor> : IMailbox where TActor: class {
-        TActor Proxy { get; }
-        void EnqueueExpression<TResult>(Guid id, IActorRef sender, Expression<Func<TActor, Task<TResult>>> expr);
-        void EnqueueExpression<TResult>(Guid id, IActorRef sender, Expression<Func<TActor, Task>> expr);
-        void EnqueueExpression<TResult>(Guid id, IActorRef sender, Expression<Action<TActor>> expr);
-        void SetInstance(TActor instance);
-    }
-
-    public class Mailbox<TActor> : IInterceptor, IMailbox<TActor> where TActor : class {
+    public class Mailbox<TActor> : IMailbox<TActor> where TActor : class {
 
         private static ProxyGenerator _generator = new ProxyGenerator();
+
+        private readonly Func<TActor> _builder;
         private readonly IActorRef _actorRef;
         private readonly Queue<Message<TActor>> _queue = new Queue<Message<TActor>>();
         private readonly Dictionary<Guid,object> _pendingResponses = new Dictionary<Guid, object>();
-        private readonly TActor _proxy;
         private TActor _instance;
 
-        public Mailbox(string name) {
-            _actorRef = new ActorRef(name);
-            _proxy = _generator.CreateInterfaceProxyWithoutTarget<TActor>(this);
+        public Mailbox(string name, Func<TActor> builder) {
+            _builder = builder;
+            _actorRef = new ActorRef(name, typeof(TActor));
+            _instance = _builder();
         }
 
         public IActorRef Ref { get { return _actorRef; } }
-        public TActor Proxy { get { return _proxy; } }
 
         public void EnqueueResponseMessage<TResult>(Guid id, TResult result) {
             object completionObject;
@@ -57,15 +42,24 @@ namespace Droog.Calculon.Backstage {
             return this as IMailbox<TActor1>;
         }
 
-        public void EnqueueExpression<TResult>(Guid id, IActorRef sender, Expression<Func<TActor, Task<TResult>>> expr) {
+        public MessageResponse<TResult> CreatePendingResponse<TResult>() {
+            var tcs = new TaskCompletionSource<TResult>();
+            var response = new MessageResponse<TResult>(tcs);
+            _pendingResponses.Add(response.Id,tcs);
+            return response;
+        }
+
+        public TActor Proxy { get; private set; }
+
+        public void EnqueueExpression<TResult>(Guid id, IActorRef sender, Func<TActor, Task<TResult>> expr) {
             _queue.Enqueue(Message<TActor>.FromExpression(id, sender, expr));
         }
 
-        public void EnqueueExpression<TResult>(Guid id, IActorRef sender, Expression<Func<TActor, Task>> expr) {
+        public void EnqueueExpression(Guid id, IActorRef sender, Func<TActor, Task> expr) {
             _queue.Enqueue(Message<TActor>.FromExpression(id, sender, expr));
         }
 
-        public void EnqueueExpression<TResult>(Guid id, IActorRef sender, Expression<Action<TActor>> expr) {
+        public void EnqueueExpression(Guid id, IActorRef sender, Action<TActor> expr) {
             _queue.Enqueue(Message<TActor>.FromExpression(id, sender, expr));
         }
 
@@ -73,8 +67,9 @@ namespace Droog.Calculon.Backstage {
             _instance = instance;
         }
 
-        public void Intercept(IInvocation invocation) {
-            throw new NotImplementedException();
+        public TActor BuildProxy(IMailbox sender) {
+            return _generator.CreateInterfaceProxyWithoutTarget<TActor>(new ActorProxy<TActor>(sender, this));
         }
+
     }
 }
