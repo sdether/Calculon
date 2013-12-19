@@ -54,23 +54,23 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Backstage\ActorProxy.cs" />
+    <Compile Include="Backstage\Backstage.cs" />
+    <Compile Include="Backstage\TaskHelpers.cs" />
     <Compile Include="Backstage\IBackstage.cs" />
     <Compile Include="Backstage\IMailbox.cs" />
     <Compile Include="Backstage\Mailbox.cs" />
     <Compile Include="Backstage\Message.cs" />
-    <Compile Include="Backstage\ActorRef.cs" />
+    <Compile Include="ActorRef.cs" />
     <Compile Include="Backstage\MessageResponse.cs" />
+    <Compile Include="Completion.cs" />
     <Compile Include="IActor.cs" />
     <Compile Include="IActorBuilder.cs" />
-    <Compile Include="IActorRef.cs" />
     <Compile Include="IScene.cs" />
     <Compile Include="IStage.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Stage.cs" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Stagehands\" />
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

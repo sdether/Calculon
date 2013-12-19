@@ -12,7 +12,7 @@ namespace Sandbox {
     public class Coordinator : IActor {
 
         public Task<int> Add(int a, int b, int c) {
-            var addr = Scene.Create<IAdder>("adder");
+            var addr = Scene.CreateAndGet<IAdder>("adder");
             var completion = new TaskCompletionSource<int>();
             var x = addr.Add(a, b)
                 .ContinueWith(t1 => {
@@ -36,13 +36,9 @@ namespace Sandbox {
         }
 
         public IScene Scene { get; set; }
-        public IActorRef Parent { get; set; }
-        public IActorRef Sender { get; set; }
-        public Coordinator Self { get; set; }
-
-        public void Start() {
-            Self.Add(1, 2, 3);
-        }
+        public ActorRef Parent { get; set; }
+        public ActorRef Sender { get; set; }
+        public ActorRef Self { get; set; }
 
         public void Shutdown() { }
     }

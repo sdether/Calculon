@@ -1,5 +1,6 @@
 namespace Droog.Calculon.Backstage {
     public interface IBackstage {
-        IMailbox GetMailbox(IActorRef sender);
+        IMailbox GetMailbox(ActorRef sender);
+        IScene CreateScene(ActorRef sender);
     }
 }

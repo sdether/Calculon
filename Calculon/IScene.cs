@@ -1,11 +1,11 @@
 ﻿using System.Threading.Tasks;
 
 namespace Droog.Calculon {
-    public interface IScene : IStage {
-        Task<T> Return<T>(T value);
-        TaskCompletionSource<T> GetCompletion<T>();
-        void Shutdown(IActorRef actorRef);
+    public interface IScene {
+        ActorRef Sender { get; }
+        Task<TResult> Return<TResult>(TResult value);
+        Completion<TResult> GetCompletion<TResult>();
+        void Shutdown(ActorRef actorRef);
         void Shutdown(object actor);
-
     }
 }

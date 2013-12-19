@@ -14,8 +14,7 @@ namespace Droog.Calculon.Backstage {
         public ActorProxy(IMailbox sender, IMailbox<TActor> receiver) {
             _sender = sender;
             _receiver = receiver;
-            _interceptTaskInfo = GetType().GetMethods().First(x => x.Name == "InterceptTask" && x.IsGenericMethod);
-
+            _interceptTaskInfo = GetType().GetMethods(BindingFlags.NonPublic|BindingFlags.Instance).First(x => x.Name == "InterceptTask" && x.IsGenericMethod);
         }
 
         public void Intercept(IInvocation invocation) {
@@ -30,7 +29,6 @@ namespace Droog.Calculon.Backstage {
                 var generic = _interceptTaskInfo.MakeGenericMethod(taskType);
                 generic.Invoke(this, new object[] {invocation});
             }
-            invocation.Proceed();
         }
 
         private void InterceptTask<TResult>(IInvocation invocation) {
