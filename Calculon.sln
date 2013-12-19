@@ -10,8 +10,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calculon", "Calculon\Calcul
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calculon.Tests", "Calculon.Tests\Calculon.Tests.csproj", "{1F4DA729-9FBC-4363-B13C-AC87420889DB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sandbox", "Sandbox\Sandbox.csproj", "{3942C4AC-239F-480A-8B5C-A0C87A8DDFBF}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -26,10 +24,6 @@ Global
 		{1F4DA729-9FBC-4363-B13C-AC87420889DB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1F4DA729-9FBC-4363-B13C-AC87420889DB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1F4DA729-9FBC-4363-B13C-AC87420889DB}.Release|Any CPU.Build.0 = Release|Any CPU
-		{3942C4AC-239F-480A-8B5C-A0C87A8DDFBF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{3942C4AC-239F-480A-8B5C-A0C87A8DDFBF}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{3942C4AC-239F-480A-8B5C-A0C87A8DDFBF}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{3942C4AC-239F-480A-8B5C-A0C87A8DDFBF}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

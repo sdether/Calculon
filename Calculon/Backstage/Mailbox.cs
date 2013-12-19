@@ -10,22 +10,21 @@ namespace Droog.Calculon.Backstage {
 
         private static ProxyGenerator _generator = new ProxyGenerator();
 
+        private readonly ActorRef _parent;
         private readonly IBackstage _backstage;
         private readonly Func<TActor> _builder;
-        private readonly Calculon.ActorRef _actorRef;
+        private readonly ActorRef _actorRef;
         private readonly Queue<Message<TActor>> _queue = new Queue<Message<TActor>>();
         private readonly Dictionary<Guid, object> _pendingResponses = new Dictionary<Guid, object>();
         private TActor _instance;
         private bool _processing = false;
 
         public Mailbox(ActorRef parent, string name, IBackstage backstage, Func<TActor> builder) {
+            _parent = parent;
             _backstage = backstage;
             _builder = builder;
             _actorRef = new ActorRef(name, typeof(TActor));
             _instance = _builder();
-            var actor = _instance as IActor;
-            actor.Self = Ref;
-            actor.Parent = parent;
         }
 
         public ActorRef Ref { get { return _actorRef; } }
@@ -149,7 +148,7 @@ namespace Droog.Calculon.Backstage {
 
         private void ExecuteMessage(Message<TActor> msg) {
             var actor = _instance as IActor;
-            actor.Scene = _backstage.CreateScene(msg.Sender);
+            actor.Scene = new Scene(_backstage,Ref,_parent,msg.Sender);
             msg.Execute(_backstage, _instance);
         }
     }

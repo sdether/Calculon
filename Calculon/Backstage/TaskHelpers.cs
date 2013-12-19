@@ -15,11 +15,5 @@ namespace Droog.Calculon.Backstage {
             tcs.SetResult(value);
             return tcs.Task;
         }
-
-        //public static Task GetCompletedTask() {
-        //    var tcs = new TaskCompletionSource<object>();
-        //    tcs.SetResult(null);
-        //    return tcs.Task;
-        //}
     }
 }

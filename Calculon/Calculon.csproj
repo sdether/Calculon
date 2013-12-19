@@ -55,6 +55,7 @@
   <ItemGroup>
     <Compile Include="Backstage\ActorProxy.cs" />
     <Compile Include="Backstage\Backstage.cs" />
+    <Compile Include="Backstage\Scene.cs" />
     <Compile Include="Backstage\TaskHelpers.cs" />
     <Compile Include="Backstage\IBackstage.cs" />
     <Compile Include="Backstage\IMailbox.cs" />

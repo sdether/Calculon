@@ -19,7 +19,6 @@ namespace Sandbox {
                     addr.Add(t1.Result, c)
                         .ContinueWith(t2 => {
                             completion.SetResult(t2.Result+c);
-                            Scene.Shutdown(addr);
                         });
                 });
             return completion.Task;

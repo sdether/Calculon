@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using NUnit.Framework;
@@ -19,21 +16,19 @@ namespace Droog.Calculon.Tests {
 
         public class Adder : AActor, IAdder {
             public Task<int> Add(int a, int b) {
-                var tcs = new TaskCompletionSource<int>();
-                tcs.SetResult(a + b);
-                return tcs.Task;
+                return Scene.Return(a + b);
             }
 
             public Task<int> AddDelayed(int a, int b, TimeSpan delay) {
-                var tcs = new TaskCompletionSource<int>();
-                new Timer(_ => tcs.SetResult(a + b)).Change(delay, TimeSpan.Zero);
-                return tcs.Task;
+                var completion = Scene.GetCompletion<int>();
+                new Timer(_ => completion.SetResult(a + b)).Change(delay, TimeSpan.Zero);
+                return completion;
             }
         }
 
         [Test]
         public void Can_create_and_call_actor() {
-            var stage = new Stage(new ActorBuilder());
+            var stage = new Stage();
             var adder = stage.CreateAndGet<IAdder>();
             var t1 = adder.Add(1, 1);
             var t2 = adder.Add(2, 2);
@@ -45,7 +40,7 @@ namespace Droog.Calculon.Tests {
 
         [Test]
         public void Can_chain_actor_calls() {
-            var stage = new Stage(new ActorBuilder());
+            var stage = new Stage();
             var adder = stage.CreateAndGet<IAdder>();
             var t = adder.Add(1, 1)
                 .ContinueWith(t1 => adder.Add(t1.Result, 2));
@@ -55,7 +50,7 @@ namespace Droog.Calculon.Tests {
 
         [Test]
         public void Can_call_delayed_call() {
-            var stage = new Stage(new ActorBuilder());
+            var stage = new Stage();
             var adder = stage.CreateAndGet<IAdder>();
             var t1 = adder.AddDelayed(1, 1, TimeSpan.FromSeconds(1));
             var sw = Stopwatch.StartNew();
