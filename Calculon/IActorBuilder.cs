@@ -14,7 +14,8 @@ namespace Droog.Calculon {
         private readonly IEnumerable<Type> _types;
  
         public ActorBuilder() {
-            _types = AppDomain.CurrentDomain.GetAssemblies().SelectMany(x => x.GetTypes()).Where(t => t.IsClass).ToArray();
+            var actorType = typeof(IActor);
+            _types = AppDomain.CurrentDomain.GetAssemblies().SelectMany(x => x.GetTypes()).Where(t => t.IsClass && actorType.IsAssignableFrom(t)).ToArray();
         }
 
         public Func<TActor> GetBuilder<TActor>() {
