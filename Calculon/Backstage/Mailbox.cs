@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Castle.DynamicProxy;
@@ -47,14 +48,19 @@ namespace Droog.Calculon.Backstage {
             return response;
         }
 
-        public void EnqueueExpression<TResult>(Guid id, Calculon.ActorRef sender, Func<TActor, Task<TResult>> expr) {
+        public void EnqueueExpression<TResult>(Guid id, ActorRef sender, Func<TActor, Task<TResult>> expr) {
             var msg = new Message<TActor>(sender, (backstage, actor) => {
                 var tcs = new TaskCompletionSource<object>();
-                expr(actor).ContinueWith(t => {
+                try {
+                    expr(actor).ContinueWith(t => {
+                        var mailbox = backstage.GetMailbox(sender);
+                        mailbox.EnqueueResponseMessage(id, Ref, t);
+                        tcs.SetResult(null);
+                    });
+                } catch(TargetInvocationException e) {
                     var mailbox = backstage.GetMailbox(sender);
-                    mailbox.EnqueueResponseMessage(id, Ref, t.Result);
-                    tcs.SetResult(null);
-                });
+                    mailbox.EnqueueResponseMessage(id, Ref, TaskHelpers.GetFaultedTask<TResult>(e.InnerException));
+                }
                 return tcs.Task;
             });
 
@@ -64,11 +70,16 @@ namespace Droog.Calculon.Backstage {
         public void EnqueueExpression(Guid id, ActorRef sender, Func<TActor, Task> expr) {
             var msg = new Message<TActor>(sender, (backstage, actor) => {
                 var tcs = new TaskCompletionSource<object>();
-                expr(actor).ContinueWith(t => {
+                try {
+                    expr(actor).ContinueWith(t => {
+                        var mailbox = backstage.GetMailbox(sender);
+                        mailbox.EnqueueResponseMessage(id, Ref, t);
+                        tcs.SetResult(null);
+                    });
+                } catch(TargetInvocationException e) {
                     var mailbox = backstage.GetMailbox(sender);
-                    mailbox.EnqueueResponseMessage<object>(id, Ref, null);
-                    tcs.SetResult(null);
-                });
+                    mailbox.EnqueueResponseMessage(id, Ref, TaskHelpers.GetFaultedTask(e.InnerException));
+                }
                 return tcs.Task;
             });
             Enqueue(msg);
@@ -81,7 +92,7 @@ namespace Droog.Calculon.Backstage {
             }));
         }
 
-        public void EnqueueResponseMessage<TResult>(Guid id, ActorRef sender, TResult result) {
+        public void EnqueueResponseMessage<TResult>(Guid id, ActorRef sender, Task<TResult> result) {
             object completionObject;
             if(!_pendingResponses.TryGetValue(id, out completionObject)) {
                 return;
@@ -91,7 +102,30 @@ namespace Droog.Calculon.Backstage {
                 return;
             }
             Enqueue(new Message<TActor>(sender, (backstage, actor) => {
-                completion.SetResult(result);
+                if(result.IsFaulted) {
+                    completion.SetException(result.Exception);
+                } else {
+                    completion.SetResult(result.Result);
+                }
+                return TaskHelpers.CompletedTask;
+            }));
+        }
+
+        public void EnqueueResponseMessage(Guid id, ActorRef sender, Task result) {
+            object completionObject;
+            if(!_pendingResponses.TryGetValue(id, out completionObject)) {
+                return;
+            }
+            var completion = completionObject as TaskCompletionSource<object>;
+            if(completion == null) {
+                return;
+            }
+            Enqueue(new Message<TActor>(sender, (backstage, actor) => {
+                if(result.IsFaulted) {
+                    completion.SetException(result.Exception);
+                } else {
+                    completion.SetResult(null);
+                }
                 return TaskHelpers.CompletedTask;
             }));
         }

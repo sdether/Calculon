@@ -12,7 +12,7 @@ namespace Droog.Calculon.Tests {
         public interface IFoo {
              
         }
-        public class Foo : IFoo {
+        public class Foo : AActor, IFoo {
             
         }
 

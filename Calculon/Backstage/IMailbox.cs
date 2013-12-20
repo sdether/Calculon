@@ -12,7 +12,8 @@ namespace Droog.Calculon.Backstage {
 
     public interface IMailbox {
         ActorRef Ref { get; }
-        void EnqueueResponseMessage<TResult>(Guid id, ActorRef sender, TResult result);
+        void EnqueueResponseMessage<TResult>(Guid id, ActorRef sender, Task<TResult> result);
+        void EnqueueResponseMessage(Guid id, ActorRef sender, Task result);
         bool IsMailboxFor<TActor>();
         IMailbox<TActor> As<TActor>() where TActor : class;
         MessageResponse<TResult> CreatePendingResponse<TResult>();

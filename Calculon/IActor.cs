@@ -14,6 +14,7 @@ namespace Droog.Calculon {
         public Task<TResult> Return<TResult>(TResult value) {
             return Context.Return(value);
         }
+
         public Task Return() {
             return Context.Return();
         }
