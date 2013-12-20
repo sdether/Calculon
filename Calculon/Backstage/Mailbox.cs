@@ -9,8 +9,8 @@ using Castle.DynamicProxy;
 namespace Droog.Calculon.Backstage {
     public class Mailbox<TActor> : IMailbox<TActor> where TActor : class {
 
-        private static ProxyGenerator _generator = new ProxyGenerator();
-
+        private static readonly ProxyGenerator PROXY_GENERATOR = new ProxyGenerator();
+        private static readonly int MAX_PROCESSNG_SIZE = 100;
         private readonly ActorRef _parent;
         private readonly IBackstage _backstage;
         private readonly Func<TActor> _builder;
@@ -135,7 +135,7 @@ namespace Droog.Calculon.Backstage {
         }
 
         public TActor BuildProxy(IMailbox sender) {
-            return _generator.CreateInterfaceProxyWithoutTarget<TActor>(new ActorProxyInterceptor<TActor>(sender, this));
+            return PROXY_GENERATOR.CreateInterfaceProxyWithoutTarget<TActor>(new ActorProxyInterceptor<TActor>(sender, this));
         }
 
         private void Enqueue(Message<TActor> message) {
@@ -164,7 +164,7 @@ namespace Droog.Calculon.Backstage {
                     break;
                 default:
                     manyMsg = new List<Message<TActor>>();
-                    for(var i = 0; i < Math.Min(size, 10); i++) {
+                    for(var i = 0; i < Math.Min(size, MAX_PROCESSNG_SIZE); i++) {
                         manyMsg.Add(_queue.Dequeue());
                     }
                     break;
