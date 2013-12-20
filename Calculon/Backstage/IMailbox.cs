@@ -11,7 +11,7 @@ namespace Droog.Calculon.Backstage {
     }
 
     public interface IMailbox {
-        Calculon.ActorRef Ref { get; }
+        ActorRef Ref { get; }
         void EnqueueResponseMessage<TResult>(Guid id, ActorRef sender, TResult result);
         bool IsMailboxFor<TActor>();
         IMailbox<TActor> As<TActor>() where TActor : class;

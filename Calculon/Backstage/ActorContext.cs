@@ -2,20 +2,17 @@ using System;
 using System.Threading.Tasks;
 
 namespace Droog.Calculon.Backstage {
-    public class Scene : IScene {
+    public class ActorContext : IActorContext {
         private readonly IBackstage _backstage;
         private readonly ActorRef _self;
         private readonly ActorRef _parent;
-        private readonly ActorRef _sender;
 
-        public Scene(IBackstage backstage, ActorRef self, ActorRef parent, ActorRef sender) {
+        public ActorContext(IBackstage backstage, ActorRef self, ActorRef parent) {
             _backstage = backstage;
             _self = self;
             _parent = parent;
-            _sender = sender;
         }
 
-        public ActorRef Sender { get { return _sender; } }
         public ActorRef Self { get { return _self; } }
         public ActorRef Parent { get { return _parent; } }
 
@@ -31,13 +28,16 @@ namespace Droog.Calculon.Backstage {
             return new Completion<TResult>();
         }
 
-        public TActor CreateAndGet<TActor>(string name = null) where TActor : class {
-            return _backstage.CreateAndGet<TActor>(Self, Self, name);
+        public Completion GetCompletion() {
+            return new Completion();
         }
 
-        public TActor Get<TActor>(string name) where TActor : class {
-            return _backstage.Get<TActor>(Self, new ActorRef(name, typeof(TActor)));
+        public ActorProxy<TActor> Create<TActor>(string name = null) where TActor : class {
+            return _backstage.Create<TActor>(Self, Self, name);
         }
 
+        public ActorProxy<TActor> Find<TActor>(ActorRef actorRef) where TActor : class {
+            return _backstage.Find<TActor>(Self, actorRef);
+        }
     }
 }

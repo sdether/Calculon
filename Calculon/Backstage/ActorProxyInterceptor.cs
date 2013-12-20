@@ -5,13 +5,13 @@ using System.Threading.Tasks;
 using Castle.DynamicProxy;
 
 namespace Droog.Calculon.Backstage {
-    public class ActorProxy<TActor> : IInterceptor
+    public class ActorProxyInterceptor<TActor> : IInterceptor
         where TActor : class {
         private readonly IMailbox _sender;
         private readonly IMailbox<TActor> _receiver;
         private readonly MethodInfo _interceptTaskInfo;
 
-        public ActorProxy(IMailbox sender, IMailbox<TActor> receiver) {
+        public ActorProxyInterceptor(IMailbox sender, IMailbox<TActor> receiver) {
             _sender = sender;
             _receiver = receiver;
             _interceptTaskInfo = GetType().GetMethods(BindingFlags.NonPublic|BindingFlags.Instance).First(x => x.Name == "InterceptTask" && x.IsGenericMethod);
@@ -44,7 +44,7 @@ namespace Droog.Calculon.Backstage {
             var methodInfo = invocation.Method;
             var args = Enumerable.Range(0, methodInfo.GetParameters().Length).Select(invocation.GetArgumentValue).ToArray();
             Func<TActor, Task> func = actor => methodInfo.Invoke(actor, args) as Task;
-            var response = _sender.CreatePendingResponse<int>();
+            var response = _sender.CreatePendingResponse<object>();
             _receiver.EnqueueExpression(response.Id, _sender.Ref, func);
             invocation.ReturnValue = response.Task;
         }

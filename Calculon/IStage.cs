@@ -1,7 +1,8 @@
 ﻿namespace Droog.Calculon {
     public interface IStage {
-        T CreateAndGet<T>(string name) where T : class;
-        T Get<T>(string name) where T : class;
-        T Get<T>(ActorRef actorRef) where T : class;
+        ActorProxy<TActor> Create<TActor>(string name = null) where TActor : class;
+        ActorProxy<TActor> Find<TActor>(ActorRef actorRef) where TActor : class;
     }
+
+    
 }

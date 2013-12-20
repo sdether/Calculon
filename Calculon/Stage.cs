@@ -10,18 +10,12 @@ namespace Droog.Calculon {
             _backstage = new Backstage.Backstage();
         }
 
-        public TActor CreateAndGet<TActor>(string name = null) where TActor : class {
-            return _backstage.CreateAndGet<TActor>(_backstage.RootRef, _backstage.RootRef, name);
+        public ActorProxy<TActor> Find<TActor>(ActorRef actorRef) where TActor : class {
+            return _backstage.Find<TActor>(_backstage.RootRef, actorRef);
         }
 
-        public TActor Get<TActor>(string name) where TActor : class {
-            return Get<TActor>(new ActorRef(name, typeof(TActor)));
+        public ActorProxy<TActor> Create<TActor>(string name = null) where TActor : class {
+            return _backstage.Create<TActor>(_backstage.RootRef, _backstage.RootRef, name);
         }
-
-        public TActor Get<TActor>(ActorRef actorRef) where TActor : class {
-            return _backstage.Get<TActor>(_backstage.RootRef, actorRef);
-        }
-
-
     }
 }

@@ -23,8 +23,11 @@ namespace Droog.Calculon.Backstage {
             _parent = parent;
             _backstage = backstage;
             _builder = builder;
-            _actorRef = new ActorRef(name, typeof(TActor));
+            _actorRef = (parent ?? ActorRef.Parse("/")).At(name);
             _instance = _builder();
+            var actor = _instance as IActor;
+            actor.Context = new ActorContext(_backstage, Ref, _parent);
+
         }
 
         public ActorRef Ref { get { return _actorRef; } }
@@ -98,7 +101,7 @@ namespace Droog.Calculon.Backstage {
         }
 
         public TActor BuildProxy(IMailbox sender) {
-            return _generator.CreateInterfaceProxyWithoutTarget<TActor>(new ActorProxy<TActor>(sender, this));
+            return _generator.CreateInterfaceProxyWithoutTarget<TActor>(new ActorProxyInterceptor<TActor>(sender, this));
         }
 
         private void Enqueue(Message<TActor> message) {
@@ -107,6 +110,7 @@ namespace Droog.Calculon.Backstage {
                 if(_processing) {
                     return;
                 }
+                _processing = true;
                 ThreadPool.QueueUserWorkItem(Dequeue);
             }
         }
@@ -114,8 +118,9 @@ namespace Droog.Calculon.Backstage {
         private void Dequeue(object state) {
             List<Message<TActor>> manyMsg = null;
             Message<TActor> singleMsg = null;
+            var size = 0;
             lock(_queue) {
-                var size = _queue.Count;
+                size = _queue.Count;
                 switch(size) {
                 case 0:
                     _processing = false;
@@ -133,14 +138,19 @@ namespace Droog.Calculon.Backstage {
             }
             if(singleMsg != null) {
                 ExecuteMessage(singleMsg);
-                return;
-            }
-            foreach(var msg in manyMsg) {
-                ExecuteMessage(msg);
+            } else {
+                foreach(var msg in manyMsg) {
+                    ExecuteMessage(msg);
+                }
+                if(size > 10) {
+                    ThreadPool.QueueUserWorkItem(Dequeue);
+                    return;
+                }
             }
             lock(_queue) {
                 if(!_queue.Any()) {
                     _processing = false;
+                    return;
                 }
                 ThreadPool.QueueUserWorkItem(Dequeue);
             }
@@ -148,7 +158,7 @@ namespace Droog.Calculon.Backstage {
 
         private void ExecuteMessage(Message<TActor> msg) {
             var actor = _instance as IActor;
-            actor.Scene = new Scene(_backstage,Ref,_parent,msg.Sender);
+            actor.Sender = msg.Sender;
             msg.Execute(_backstage, _instance);
         }
     }

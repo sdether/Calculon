@@ -20,25 +20,24 @@ namespace Droog.Calculon.Backstage {
         public ActorRef RootRef { get { return _root.Ref; } }
 
         public IMailbox GetMailbox(ActorRef actorRef) {
-            return _mailboxes[actorRef.Name];
+            return _mailboxes[actorRef.ToString()];
         }
 
-        public TActor CreateAndGet<TActor>(ActorRef caller, ActorRef parent, string name = null) where TActor : class {
+        public ActorProxy<TActor> Create<TActor>(ActorRef caller, ActorRef parent, string name) where TActor : class {
             var mailbox = CreateMailbox<TActor>(parent, name);
-            var senderMailbox = _mailboxes[caller.Name];
-            return mailbox.BuildProxy(senderMailbox);
+            var senderMailbox = _mailboxes[caller.ToString()];
+            return new ActorProxy<TActor>(mailbox.Ref,mailbox.BuildProxy(senderMailbox));
         }
 
-        public TActor Get<TActor>(ActorRef caller, ActorRef actorRef) where TActor : class {
-            var mailbox = _mailboxes[actorRef.Name].As<TActor>();
-            var senderMailbox = _mailboxes[caller.Name];
-            return mailbox.BuildProxy(senderMailbox);
+
+        public ActorProxy<TActor> Find<TActor>(ActorRef caller, ActorRef actorRef) where TActor : class {
+            throw new NotImplementedException();
         }
 
         private IMailbox<TActor> CreateMailbox<TActor>(ActorRef parent, string name = null) where TActor : class {
             name = name ?? "__" + Guid.NewGuid();
             var mailbox = new Mailbox<TActor>(parent, name, this, _builder.GetBuilder<TActor>());
-            _mailboxes[mailbox.Ref.Name] = mailbox;
+            _mailboxes[mailbox.Ref.ToString()] = mailbox;
             return mailbox;
         }
     }
