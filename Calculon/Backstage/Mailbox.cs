@@ -10,14 +10,17 @@ namespace Droog.Calculon.Backstage {
     public class Mailbox<TActor> : IMailbox<TActor> where TActor : class {
 
         private static readonly ProxyGenerator PROXY_GENERATOR = new ProxyGenerator();
-        private static readonly int MAX_PROCESSNG_SIZE = 100;
+        private const int MAX_PROCESSNG_SIZE = 100;
+
         private readonly ActorRef _parent;
         private readonly IBackstage _backstage;
         private readonly Func<TActor> _builder;
         private readonly ActorRef _actorRef;
-        private readonly Queue<Message<TActor>> _queue = new Queue<Message<TActor>>();
-        private readonly Dictionary<Guid, object> _pendingResponses = new Dictionary<Guid, object>();
-        private TActor _instance;
+        private readonly Queue<Message> _queue = new Queue<Message>();
+        private readonly Dictionary<Guid, MessageResponse> _pendingResponses = new Dictionary<Guid, MessageResponse>();
+        private readonly Dictionary<string, Action<Message, TActor>> _handlers = new Dictionary<string, Action<Message, TActor>>();
+        private readonly MethodInfo _buildTaskofTHandler;
+        private readonly TActor _instance;
         private bool _processing = false;
 
         public Mailbox(ActorRef parent, string name, IBackstage backstage, Func<TActor> builder) {
@@ -26,9 +29,90 @@ namespace Droog.Calculon.Backstage {
             _builder = builder;
             _actorRef = (parent ?? ActorRef.Parse("/")).At(name);
             _instance = _builder();
+            _buildTaskofTHandler = GetType().GetMethods(BindingFlags.NonPublic | BindingFlags.Instance).First(x => x.Name == "BuildTaskHandler" && x.IsGenericMethod);
             var actor = _instance as IActor;
             actor.Context = new ActorContext(_backstage, Ref, _parent);
+            PopulatedMessageHandlers();
+        }
 
+        private void PopulatedMessageHandlers() {
+            foreach(var methodInfo in typeof(TActor).GetMethods()) {
+                var returnType = methodInfo.ReturnType;
+                Action<Message, TActor> handler;
+                if(returnType == typeof(void)) {
+                    handler = BuildVoidHandler(methodInfo);
+                } else if(returnType == typeof(Task)) {
+                    handler = BuildTaskHandler(methodInfo);
+                } else if(returnType.GetGenericTypeDefinition() == typeof(Task<>)) {
+                    var taskType = returnType.GetGenericArguments().First();
+                    var generic = _buildTaskofTHandler.MakeGenericMethod(taskType);
+                    handler = generic.Invoke(this, new object[] { methodInfo }) as Action<Message, TActor>;
+                } else {
+                    continue;
+                }
+                var signature = Message.GetContractFromMethodInfo(methodInfo);
+                _handlers[signature] = handler;
+            }
+            _handlers[MessageType.Response.ToString()] = BuildResponseHandler();
+            _handlers[MessageType.Fault.ToString()] = BuildFaultHandler();
+        }
+
+        private Action<Message, TActor> BuildFaultHandler() {
+            return (msg, actor) => {
+                var response = GetPendingResponse(msg.Id);
+                response.Fault(msg.Args[0] as Exception);
+            };
+        }
+
+        private MessageResponse GetPendingResponse(Guid id) {
+            lock(_pendingResponses) {
+                var response = _pendingResponses[id];
+                _pendingResponses.Remove(id);
+                return response;
+            }
+        }
+
+        private Action<Message, TActor> BuildResponseHandler() {
+            return (msg, actor) => {
+                var response = GetPendingResponse(msg.Id);
+                response.Complete(msg.Args[0]);
+            };
+        }
+
+        private Action<Message, TActor> BuildTaskHandler(MethodInfo methodInfo) {
+            return (msg, actor) => {
+                var mailbox = _backstage.GetMailbox(msg.Sender);
+                try {
+                    (methodInfo.Invoke(actor, msg.Args) as Task).ContinueWith(t => mailbox.Enqueue(
+                        t.IsFaulted
+                            ? new Message(msg.Id, Ref, msg.Contract, MessageType.Fault, null, new object[] { t.Exception })
+                            : new Message(msg.Id, Ref, msg.Contract, MessageType.Response, null, new object[] { null })
+                        )
+                    );
+                } catch(TargetInvocationException e) {
+                    mailbox.Enqueue(new Message(msg.Id, Ref, msg.Contract, MessageType.Fault, null, new[] { e.InnerException }));
+                }
+            };
+        }
+
+        private Action<Message, TActor> BuildTaskHandler<TResult>(MethodInfo methodInfo) {
+            return (msg, actor) => {
+                var mailbox = _backstage.GetMailbox(msg.Sender);
+                try {
+                    (methodInfo.Invoke(actor, msg.Args) as Task<TResult>).ContinueWith(t => mailbox.Enqueue(
+                        t.IsFaulted
+                            ? new Message(msg.Id, Ref, msg.Contract, MessageType.Fault, typeof(TResult), new object[] { t.Exception })
+                            : new Message(msg.Id, Ref, msg.Contract, MessageType.Response, typeof(TResult), new object[] { t.Result })
+                        )
+                    );
+                } catch(TargetInvocationException e) {
+                    mailbox.Enqueue(new Message(msg.Id, Ref, msg.Contract, MessageType.Fault, typeof(TResult), new[] { e.InnerException }));
+                }
+            };
+        }
+
+        private Action<Message, TActor> BuildVoidHandler(MethodInfo methodInfo) {
+            return (msg, actor) => methodInfo.Invoke(actor, msg.Args);
         }
 
         public ActorRef Ref { get { return _actorRef; } }
@@ -41,106 +125,21 @@ namespace Droog.Calculon.Backstage {
             return this as IMailbox<TActor1>;
         }
 
-        public MessageResponse<TResult> CreatePendingResponse<TResult>() {
-            var tcs = new TaskCompletionSource<TResult>();
-            var response = new MessageResponse<TResult>(tcs);
-            _pendingResponses.Add(response.Id, tcs);
+        public MessageResponse CreatePendingResponse(Type type) {
+            var response = new MessageResponse(type);
+            lock(_pendingResponses) {
+                _pendingResponses.Add(response.Id, response);
+            }
             return response;
-        }
-
-        public void EnqueueExpression<TResult>(Guid id, ActorRef sender, Func<TActor, Task<TResult>> expr) {
-            var msg = new Message<TActor>(sender, (backstage, actor) => {
-                var tcs = new TaskCompletionSource<object>();
-                try {
-                    expr(actor).ContinueWith(t => {
-                        var mailbox = backstage.GetMailbox(sender);
-                        mailbox.EnqueueResponseMessage(id, Ref, t);
-                        tcs.SetResult(null);
-                    });
-                } catch(TargetInvocationException e) {
-                    var mailbox = backstage.GetMailbox(sender);
-                    mailbox.EnqueueResponseMessage(id, Ref, TaskHelpers.GetFaultedTask<TResult>(e.InnerException));
-                }
-                return tcs.Task;
-            });
-
-            Enqueue(msg);
-        }
-
-        public void EnqueueExpression(Guid id, ActorRef sender, Func<TActor, Task> expr) {
-            var msg = new Message<TActor>(sender, (backstage, actor) => {
-                var tcs = new TaskCompletionSource<object>();
-                try {
-                    expr(actor).ContinueWith(t => {
-                        var mailbox = backstage.GetMailbox(sender);
-                        mailbox.EnqueueResponseMessage(id, Ref, t);
-                        tcs.SetResult(null);
-                    });
-                } catch(TargetInvocationException e) {
-                    var mailbox = backstage.GetMailbox(sender);
-                    mailbox.EnqueueResponseMessage(id, Ref, TaskHelpers.GetFaultedTask(e.InnerException));
-                }
-                return tcs.Task;
-            });
-            Enqueue(msg);
-        }
-
-        public void EnqueueExpression(Guid id, ActorRef sender, Action<TActor> expr) {
-            Enqueue(new Message<TActor>(sender, (backstage, actor) => {
-                expr(actor);
-                return TaskHelpers.CompletedTask;
-            }));
-        }
-
-        public void EnqueueResponseMessage<TResult>(Guid id, ActorRef sender, Task<TResult> result) {
-            object completionObject;
-            if(!_pendingResponses.TryGetValue(id, out completionObject)) {
-                return;
-            }
-            var completion = completionObject as TaskCompletionSource<TResult>;
-            if(completion == null) {
-                return;
-            }
-            Enqueue(new Message<TActor>(sender, (backstage, actor) => {
-                if(result.IsFaulted) {
-                    completion.SetException(result.Exception);
-                } else {
-                    completion.SetResult(result.Result);
-                }
-                return TaskHelpers.CompletedTask;
-            }));
-        }
-
-        public void EnqueueResponseMessage(Guid id, ActorRef sender, Task result) {
-            object completionObject;
-            if(!_pendingResponses.TryGetValue(id, out completionObject)) {
-                return;
-            }
-            var completion = completionObject as TaskCompletionSource<object>;
-            if(completion == null) {
-                return;
-            }
-            Enqueue(new Message<TActor>(sender, (backstage, actor) => {
-                if(result.IsFaulted) {
-                    completion.SetException(result.Exception);
-                } else {
-                    completion.SetResult(null);
-                }
-                return TaskHelpers.CompletedTask;
-            }));
-        }
-
-        public void SetInstance(TActor instance) {
-            _instance = instance;
         }
 
         public TActor BuildProxy(IMailbox sender) {
             return PROXY_GENERATOR.CreateInterfaceProxyWithoutTarget<TActor>(new ActorProxyInterceptor<TActor>(sender, this));
         }
 
-        private void Enqueue(Message<TActor> message) {
+        public void Enqueue(Message msg) {
             lock(_queue) {
-                _queue.Enqueue(message);
+                _queue.Enqueue(msg);
                 if(_processing) {
                     return;
                 }
@@ -150,8 +149,8 @@ namespace Droog.Calculon.Backstage {
         }
 
         private void Dequeue(object state) {
-            List<Message<TActor>> manyMsg = null;
-            Message<TActor> singleMsg = null;
+            List<Message> manyMsg = null;
+            Message singleMsg = null;
             var size = 0;
             lock(_queue) {
                 size = _queue.Count;
@@ -163,7 +162,7 @@ namespace Droog.Calculon.Backstage {
                     singleMsg = _queue.Dequeue();
                     break;
                 default:
-                    manyMsg = new List<Message<TActor>>();
+                    manyMsg = new List<Message>();
                     for(var i = 0; i < Math.Min(size, MAX_PROCESSNG_SIZE); i++) {
                         manyMsg.Add(_queue.Dequeue());
                     }
@@ -190,10 +189,10 @@ namespace Droog.Calculon.Backstage {
             }
         }
 
-        private void ExecuteMessage(Message<TActor> msg) {
+        private void ExecuteMessage(Message msg) {
             var actor = _instance as IActor;
             actor.Sender = msg.Sender;
-            msg.Execute(_backstage, _instance);
+            _handlers[msg.Signature](msg, _instance);
         }
     }
 }

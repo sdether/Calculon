@@ -57,11 +57,12 @@
     <Compile Include="Backstage\ActorProxyInterceptor.cs" />
     <Compile Include="Backstage\Backstage.cs" />
     <Compile Include="Backstage\ActorContext.cs" />
+    <Compile Include="Backstage\Message.cs" />
+    <Compile Include="Backstage\MessageType.cs" />
     <Compile Include="Backstage\TaskHelpers.cs" />
     <Compile Include="Backstage\IBackstage.cs" />
     <Compile Include="Backstage\IMailbox.cs" />
     <Compile Include="Backstage\Mailbox.cs" />
-    <Compile Include="Backstage\Message.cs" />
     <Compile Include="Backstage\MessageResponse.cs" />
     <Compile Include="Completion.cs" />
     <Compile Include="IActor.cs" />

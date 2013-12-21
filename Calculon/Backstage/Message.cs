@@ -1,21 +1,42 @@
 using System;
-using System.Threading;
-using System.Threading.Tasks;
+using System.Reflection;
+using System.Text;
 
 namespace Droog.Calculon.Backstage {
-    public class Message<TActor> {
+    public class Message {
 
-        private readonly Func<IBackstage, TActor,Task> _message;
-
-        public readonly ActorRef Sender;
-
-        public Message(ActorRef sender, Func<IBackstage, TActor, Task> message) {
-            Sender = sender;
-            _message = message;
+        public static string GetContractFromMethodInfo(MethodInfo methodInfo) {
+            var sb = new StringBuilder();
+            sb.Append(methodInfo.Name);
+            sb.Append("(");
+            foreach(var param in methodInfo.GetParameters()) {
+                sb.Append(param.ParameterType.Name);
+                sb.Append(",");
+            }
+            sb.Append(")");
+            return sb.ToString();
         }
 
-        public Task Execute(IBackstage backstage, TActor actor) {
-            return _message(backstage, actor);
+        public readonly Guid Id;
+        public readonly ActorRef Sender;
+        public readonly string Contract;
+        public readonly object[] Args;
+        public readonly MessageType Type;
+        public readonly Type Response;
+
+        public Message(Guid id, ActorRef sender, string contract, MessageType type, Type responseType, object[] args) {
+            Id = id;
+            Sender = sender;
+            Type = type;
+            Contract = contract;
+            Response = responseType;
+            Args = args;
+        }
+
+        public string Signature { get { return (Type == MessageType.Fault || Type == MessageType.Response) ? Type.ToString() : Contract; } }
+
+        public override string ToString() {
+            return string.Format("{0}:{1}", Type, Contract);
         }
     }
 }
