@@ -2,16 +2,6 @@
 using System.Linq;
 
 namespace Droog.Calculon {
-
-    public class ActorProxy<TActor> {
-        public readonly ActorRef Ref;
-        public readonly TActor Proxy;
-
-        public ActorProxy(ActorRef actorRef, TActor proxy) {
-            Ref = actorRef;
-            Proxy = proxy;
-        }
-    }
     public class ActorRef {
 
         public static ActorRef Parse(string address) {
@@ -24,7 +14,7 @@ namespace Droog.Calculon {
                 path = address.Split(new[] { "/" }, StringSplitOptions.RemoveEmptyEntries);
                 return new ActorRef(path);
             }
-            var parts = address.Split(new[] { ":" }, 2, StringSplitOptions.None);
+            var parts = address.Split(new[] { "://" }, 2, StringSplitOptions.None);
             path = parts[1].Split(new[] { "/" }, StringSplitOptions.RemoveEmptyEntries);
             return new ActorRef(path, scheme: parts[0]);
         }
@@ -59,7 +49,7 @@ namespace Droog.Calculon {
             if(IsRelative) {
                 return string.Join("/", Path);
             }
-            return Scheme + ":" + string.Join("/", Path);
+            return Scheme + "://" + string.Join("/", Path);
         }
     }
 }

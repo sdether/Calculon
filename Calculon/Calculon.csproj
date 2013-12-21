@@ -53,6 +53,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ActorProxy.cs" />
     <Compile Include="ActorRef.cs" />
     <Compile Include="Backstage\ActorProxyInterceptor.cs" />
     <Compile Include="Backstage\Backstage.cs" />
@@ -66,7 +67,7 @@
     <Compile Include="Backstage\MessageResponse.cs" />
     <Compile Include="Completion.cs" />
     <Compile Include="IActor.cs" />
-    <Compile Include="IActorBuilder.cs" />
+    <Compile Include="Backstage\IActorBuilder.cs" />
     <Compile Include="IActorContext.cs" />
     <Compile Include="IStage.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

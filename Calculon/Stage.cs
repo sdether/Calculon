@@ -14,8 +14,8 @@ namespace Droog.Calculon {
             return _backstage.Find<TActor>(_backstage.RootRef, actorRef);
         }
 
-        public ActorProxy<TActor> Create<TActor>(string name = null) where TActor : class {
-            return _backstage.Create<TActor>(_backstage.RootRef, _backstage.RootRef, name);
+        public ActorProxy<TActor> Create<TActor>(string name = null, Func<TActor> builder = null) where TActor : class {
+            return _backstage.Create<TActor>(_backstage.RootRef, _backstage.RootRef, name: name);
         }
     }
 }

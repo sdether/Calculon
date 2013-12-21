@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Droog.Calculon.Backstage;
 using NUnit.Framework;
 
 namespace Droog.Calculon.Tests {

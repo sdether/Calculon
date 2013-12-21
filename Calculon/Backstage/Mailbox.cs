@@ -43,7 +43,7 @@ namespace Droog.Calculon.Backstage {
                     handler = BuildVoidHandler(methodInfo);
                 } else if(returnType == typeof(Task)) {
                     handler = BuildTaskHandler(methodInfo);
-                } else if(returnType.GetGenericTypeDefinition() == typeof(Task<>)) {
+                } else if(returnType.IsGenericType && returnType.GetGenericTypeDefinition() == typeof(Task<>)) {
                     var taskType = returnType.GetGenericArguments().First();
                     var generic = _buildTaskofTHandler.MakeGenericMethod(taskType);
                     handler = generic.Invoke(this, new object[] { methodInfo }) as Action<Message, TActor>;

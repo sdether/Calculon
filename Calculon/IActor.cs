@@ -8,14 +8,18 @@ namespace Droog.Calculon {
     }
 
     public abstract class AActor: IActor {
-        public IActorContext Context { get; set; }
-        public ActorRef Sender { get; set; }
 
-        public Task<TResult> Return<TResult>(TResult value) {
+        IActorContext IActor.Context { get { return Context; } set { Context = value; } }
+        ActorRef IActor.Sender { get { return Sender; } set { Sender = value; } }
+
+        protected IActorContext Context { get; set; }
+        protected ActorRef Sender { get; set; }
+
+        protected Task<TResult> Return<TResult>(TResult value) {
             return Context.Return(value);
         }
 
-        public Task Return() {
+        protected Task Return() {
             return Context.Return();
         }
     }

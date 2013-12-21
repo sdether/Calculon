@@ -41,5 +41,22 @@ namespace Droog.Calculon.Tests {
             Assert.AreEqual(2, t1.Result);
             Assert.GreaterOrEqual(sw.ElapsedMilliseconds, 900);
         }
+
+        [Test]
+        public void Can_find_actor_by_ref() {
+            var stage = new Stage();
+            var a1 = stage.Create<IIdentity>();
+            var b1 = stage.Create<IIdentity>();
+            var a2 = stage.Find<IIdentity>(a1.Ref);
+            var b2 = stage.Find<IIdentity>(b1.Ref);
+            var a1Id = a1.Proxy.GetIdentity().WaitForResult();
+            var a2Id = a2.Proxy.GetIdentity().WaitForResult();
+            var b1Id = b1.Proxy.GetIdentity().WaitForResult();
+            var b2Id = b2.Proxy.GetIdentity().WaitForResult();
+
+            Assert.AreNotEqual(a1Id,b1Id,"actor ids were the same");
+            Assert.AreEqual(a1Id, a2Id, "a ids did not match");
+            Assert.AreEqual(b1Id, b2Id, "b ids did not match");
+        }
     }
 }

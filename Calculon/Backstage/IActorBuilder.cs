@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Linq;
 
-namespace Droog.Calculon {
+namespace Droog.Calculon.Backstage {
     public interface IActorBuilder {
         Func<TActor> GetBuilder<TActor>();
     }
