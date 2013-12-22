@@ -10,7 +10,7 @@ Philosophy
 ==========
 The actor system, known as the ``Stage`` in calculon is a closed system. Actors are only accessible via messaging and always execute in a strictly single-threaded manner, i.e. no matter how many messages are sent to different methods, there will always be only one thread of execution within one actor.
 
-Unfortunately, there is no way from preventing people to do ''bad'' things via compile time checking (such as manually spawning threads or sharing references), so Calculon tries to catch most such offenses as runtime errors, since the alternative of the execution model being violated is considered worse than the system failing at runtime.
+Unfortunately, there is no way from preventing people to do "*bad*" things via compile time checking (such as manually spawning threads or sharing references), so Calculon tries to catch most such offenses as runtime errors, since the alternative of the execution model being violated is considered worse than the system failing at runtime.
 
 Message Format
 ==============
