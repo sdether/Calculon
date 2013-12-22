@@ -66,6 +66,16 @@ namespace Droog.Calculon.Tests {
             Assert.IsInstanceOfType(typeof(Failure), t.Exception.GetBaseException());
         }
 
+        [Test]
+        public void Exception_in_void_method_does_not_disable_actor() {
+            var stage = new Stage();
+            var a = stage.Create<IFailing>().Proxy;
+            a.VoidFailure();
+            a.VoidFailure();
+            var count = a.VoidFailureCalls().WaitForResult();
+            Assert.AreEqual(2, count);
+        }
+
         private bool Wait(Task t) {
             try {
                 return t.Wait(TimeSpan.FromSeconds(5));

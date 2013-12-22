@@ -85,12 +85,14 @@ namespace Droog.Calculon.Backstage {
                 try {
                     (methodInfo.Invoke(actor, msg.Args) as Task).ContinueWith(t => mailbox.Enqueue(
                         t.IsFaulted
-                            ? new Message(msg.Id, Ref, msg.Contract, MessageType.Fault, null, new object[] { t.Exception })
-                            : new Message(msg.Id, Ref, msg.Contract, MessageType.Response, null, new object[] { null })
+                            ? new Message(msg.Id, Ref, msg.Sender, msg.Contract, MessageType.Fault, null, new object[] { t.Exception })
+                            : new Message(msg.Id, Ref, msg.Sender, msg.Contract, MessageType.Response, null, new object[] { null })
                         )
                     );
                 } catch(TargetInvocationException e) {
-                    mailbox.Enqueue(new Message(msg.Id, Ref, msg.Contract, MessageType.Fault, null, new[] { e.InnerException }));
+                    mailbox.Enqueue(new Message(msg.Id, Ref, msg.Sender, msg.Contract, MessageType.Fault, null, new[] { e.InnerException }));
+                } catch(Exception e) {
+                    mailbox.Enqueue(new Message(msg.Id, Ref, msg.Sender, msg.Contract, MessageType.Fault, null, new[] { e }));
                 }
             };
         }
@@ -101,18 +103,28 @@ namespace Droog.Calculon.Backstage {
                 try {
                     (methodInfo.Invoke(actor, msg.Args) as Task<TResult>).ContinueWith(t => mailbox.Enqueue(
                         t.IsFaulted
-                            ? new Message(msg.Id, Ref, msg.Contract, MessageType.Fault, typeof(TResult), new object[] { t.Exception })
-                            : new Message(msg.Id, Ref, msg.Contract, MessageType.Response, typeof(TResult), new object[] { t.Result })
+                            ? new Message(msg.Id, Ref, msg.Sender, msg.Contract, MessageType.Fault, typeof(TResult), new object[] { t.Exception })
+                            : new Message(msg.Id, Ref, msg.Sender, msg.Contract, MessageType.Response, typeof(TResult), new object[] { t.Result })
                         )
-                    );
+                        );
                 } catch(TargetInvocationException e) {
-                    mailbox.Enqueue(new Message(msg.Id, Ref, msg.Contract, MessageType.Fault, typeof(TResult), new[] { e.InnerException }));
+                    mailbox.Enqueue(new Message(msg.Id, Ref, msg.Sender, msg.Contract, MessageType.Fault, typeof(TResult), new[] { e.InnerException }));
+                } catch(Exception e) {
+                    mailbox.Enqueue(new Message(msg.Id, Ref, msg.Sender, msg.Contract, MessageType.Fault, typeof(TResult), new[] { e }));
                 }
             };
         }
 
         private Action<Message, TActor> BuildVoidHandler(MethodInfo methodInfo) {
-            return (msg, actor) => methodInfo.Invoke(actor, msg.Args);
+            return (msg, actor) => {
+                try {
+                    methodInfo.Invoke(actor, msg.Args);
+                } catch(TargetInvocationException e) {
+                    // TODO: swallowing for right now. Need to propagate once there is a supervisor system in place
+                } catch(Exception e) {
+                    // TODO: swallowing for right now. Need to propagate once there is a supervisor system in place
+                }
+            };
         }
 
         public ActorRef Ref { get { return _actorRef; } }

@@ -35,7 +35,7 @@ namespace Droog.Calculon.Backstage {
                  invocation.ReturnValue = response.Task;
             }
             var args = Enumerable.Range(0, methodInfo.GetParameters().Length).Select(invocation.GetArgumentValue).ToArray();
-            _receiver.Enqueue(new Message(id, _sender.Ref, Message.GetContractFromMethodInfo(methodInfo), messageType, responseType, args));
+            _receiver.Enqueue(new Message(id, _sender.Ref, _receiver.Ref, Message.GetContractFromMethodInfo(methodInfo), messageType, responseType, args));
 
         }
     }

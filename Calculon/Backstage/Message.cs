@@ -19,12 +19,13 @@ namespace Droog.Calculon.Backstage {
 
         public readonly Guid Id;
         public readonly ActorRef Sender;
+        public readonly ActorRef Receiver;
         public readonly string Contract;
         public readonly object[] Args;
         public readonly MessageType Type;
         public readonly Type Response;
 
-        public Message(Guid id, ActorRef sender, string contract, MessageType type, Type responseType, object[] args) {
+        public Message(Guid id, ActorRef sender, ActorRef receiver, string contract, MessageType type, Type responseType, object[] args) {
             Id = id;
             Sender = sender;
             Type = type;

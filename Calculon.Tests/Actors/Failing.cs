@@ -13,9 +13,12 @@ namespace Droog.Calculon.Tests.Actors {
         Task<int> FailImmediateOfT();
         Task<int> FailLaterOfT();
         Task<int> FailByThrowingOfT();
+        void VoidFailure();
+        Task<int> VoidFailureCalls();
     }
 
     public class Failing : AActor, IFailing {
+        private int _voidFailureCalled;
 
         public Task FailImmediate() {
             var completion = Context.GetCompletion();
@@ -47,6 +50,15 @@ namespace Droog.Calculon.Tests.Actors {
 
         public Task<int> FailByThrowingOfT() {
             throw new Failure();
+        }
+
+        public void VoidFailure() {
+            _voidFailureCalled++;
+            throw new Failure();
+        }
+
+        public Task<int> VoidFailureCalls() {
+            return Return(_voidFailureCalled);
         }
     }
 }

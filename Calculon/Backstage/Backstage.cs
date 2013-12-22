@@ -35,7 +35,7 @@ namespace Droog.Calculon.Backstage {
         }
 
         private IMailbox<TActor> CreateMailbox<TActor>(ActorRef parent, string name = null, Func<TActor> builder = null) where TActor : class {
-            name = name ?? "__" + Guid.NewGuid();
+            name = name ?? Guid.NewGuid().ToString();
             var mailbox = new Mailbox<TActor>(parent, name, this, builder ?? _builder.GetBuilder<TActor>());
             _mailboxes[mailbox.Ref.ToString()] = mailbox;
             return mailbox;
