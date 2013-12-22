@@ -33,5 +33,13 @@ namespace Droog.Calculon {
         public void Fail(Exception exception) {
             _completionSource.SetException(exception);
         }
+
+        public void Forward(Task<TResult> task) {
+            if(task.IsFaulted) {
+                Fail(task.Exception);
+            } else {
+                Complete(task.Result);
+            }
+        }
     }
 }
