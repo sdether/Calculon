@@ -1,0 +1,62 @@
+﻿using System;
+using System.Diagnostics;
+using System.Threading.Tasks;
+using Droog.Calculon.Tests.Actors;
+using NUnit.Framework;
+
+namespace Droog.Calculon.Tests {
+    [TestFixture]
+    public class StageTests {
+
+        [Test]
+        public void Can_create_and_call_actor() {
+            var stage = new Stage();
+            var adder = stage.Create<IAdder>().Proxy;
+            var t1 = adder.Add(1, 1);
+            var t2 = adder.Add(2, 2);
+            t1.Wait();
+            t2.Wait();
+            Assert.AreEqual(2, t1.Result);
+            Assert.AreEqual(4, t2.Result);
+        }
+
+        [Test]
+        public void Can_chain_actor_calls() {
+            var stage = new Stage();
+            var adder = stage.Create<IAdder>().Proxy;
+            var t = adder.Add(1, 1)
+                .ContinueWith(t1 => adder.Add(t1.Result, 2));
+            t.Wait();
+            Assert.AreEqual(4, t.Unwrap().Result);
+        }
+
+        [Test]
+        public void Can_call_delayed_call() {
+            var stage = new Stage();
+            var adder = stage.Create<IAdder>().Proxy;
+            var t1 = adder.AddDelayed(1, 1, TimeSpan.FromSeconds(1));
+            var sw = Stopwatch.StartNew();
+            t1.Wait();
+            sw.Stop();
+            Assert.AreEqual(2, t1.Result);
+            Assert.GreaterOrEqual(sw.ElapsedMilliseconds, 900);
+        }
+
+        [Test]
+        public void Can_find_actor_by_ref() {
+            var stage = new Stage();
+            var a1 = stage.Create<IIdentity>();
+            var b1 = stage.Create<IIdentity>();
+            var a2 = stage.Find<IIdentity>(a1.Ref);
+            var b2 = stage.Find<IIdentity>(b1.Ref);
+            var a1Id = a1.Proxy.GetIdentity().WaitForResult();
+            var a2Id = a2.Proxy.GetIdentity().WaitForResult();
+            var b1Id = b1.Proxy.GetIdentity().WaitForResult();
+            var b2Id = b2.Proxy.GetIdentity().WaitForResult();
+
+            Assert.AreNotEqual(a1Id,b1Id,"actor ids were the same");
+            Assert.AreEqual(a1Id, a2Id, "a ids did not match");
+            Assert.AreEqual(b1Id, b2Id, "b ids did not match");
+        }
+    }
+}
