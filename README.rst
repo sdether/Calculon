@@ -2,6 +2,10 @@ Calculon 0.1
 ==========
 An actor framework for .NET
 
+License
+=======
+MIT
+
 Inspiration
 ===========
 A lot of the principles of Calculon come from Akka, but since C# doesn't support pattern matching and has its own native asynchrony pattern, the TPL, Calculon eschews the single ``Receive`` method for method signatures as message contracts.
