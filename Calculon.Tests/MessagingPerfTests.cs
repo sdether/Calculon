@@ -54,7 +54,7 @@ namespace Droog.Calculon.Tests {
             }
             Task.WaitAll(tasks.ToArray());
             t.Stop();
-            Console.WriteLine("rate: {0:0.00}calls/s", n*m / t.Elapsed.TotalSeconds);
+            Console.WriteLine("rate: {0:0.00}calls/s", n * m / t.Elapsed.TotalSeconds);
         }
 
         [Test]
@@ -70,7 +70,7 @@ namespace Droog.Calculon.Tests {
                 }
             }
             t.Stop();
-            Console.WriteLine("rate: {0:0.00}calls/s", n*m / t.Elapsed.TotalSeconds);
+            Console.WriteLine("rate: {0:0.00}calls/s", n * m / t.Elapsed.TotalSeconds);
         }
 
         [Test]
@@ -120,6 +120,28 @@ namespace Droog.Calculon.Tests {
             WaitHandle.WaitAll(ready.ToArray());
             t.Stop();
             Console.WriteLine("rate: {0:0.00}calls/s", n * m / t.Elapsed.TotalSeconds);
+        }
+
+        [Test]
+        public void Ask_vs_tell_sequential() {
+            var stage = new Stage();
+            var perf = stage.Create<IPerfSender>().Proxy;
+            var n = 100000;
+            var ask = perf.AskSequential(n).WaitForResult();
+            Console.WriteLine("{0:0.00} asks/s", n / ask.TotalSeconds);
+            var tell = perf.TellSequential(n).WaitForResult();
+            Console.WriteLine("{0:0.00} tells/s", n / tell.TotalSeconds);
+        }
+
+        [Test]
+        public void Ask_vs_tell_parallel() {
+            var stage = new Stage();
+            var perf = stage.Create<IPerfSender>().Proxy;
+            var n = 100000;
+            var ask = perf.AskParallel(n).WaitForResult();
+            Console.WriteLine("{0:0.00} asks/s", n / ask.TotalSeconds);
+            var tell = perf.TellParallel(n).WaitForResult();
+            Console.WriteLine("{0:0.00} tells/s", n / tell.TotalSeconds);
         }
     }
 }
