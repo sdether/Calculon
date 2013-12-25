@@ -41,24 +41,25 @@ namespace Droog.Calculon.Tests.Actors {
 
     public class Concurrently : AActor, IConcurrently {
 
-
         private int _inOnlyOneShallEnter;
+        private readonly Random _random = new Random();
 
         public Task<ConcurrentResult> OnlyOneShallEnter(TimeSpan block) {
             var r = new ConcurrentResult();
             r.Start = _inOnlyOneShallEnter;
-            Thread.Sleep(block);
+            Thread.Sleep(_random.Next((int)block.TotalMilliseconds));
             r.During = Interlocked.Increment(ref _inOnlyOneShallEnter);
-            Thread.Sleep(block);
+            Thread.Sleep(_random.Next((int)block.TotalMilliseconds));
             r.End = Interlocked.Decrement(ref _inOnlyOneShallEnter);
             return Return(r);
         }
+
         public Task<ConcurrentResult> OnlyOneShallEnter2(TimeSpan block) {
             var r = new ConcurrentResult();
             r.Start = _inOnlyOneShallEnter;
-            Thread.Sleep(block);
+            Thread.Sleep(_random.Next((int)block.TotalMilliseconds));
             r.During = Interlocked.Increment(ref _inOnlyOneShallEnter);
-            Thread.Sleep(block);
+            Thread.Sleep(_random.Next((int)block.TotalMilliseconds));
             r.End = Interlocked.Decrement(ref _inOnlyOneShallEnter);
             return Return(r);
         }

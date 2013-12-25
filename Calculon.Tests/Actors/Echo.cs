@@ -23,12 +23,35 @@
  * ----------------------------------------------------------------------------
  */
 
-namespace Droog.Calculon.Backstage {
-    public enum MessageType {
-        Result,
-        Notification,
-        FireAndForget,
-        Response,
-        Fault
+using System.Threading.Tasks;
+
+namespace Droog.Calculon.Tests.Actors {
+
+    public interface IEcho {
+        Task<string> Ask(string data);
+        Task Notify();
+        void Tell();
+        Task<bool> VerifyTell();
+    }
+
+    public class Echo : AActor, IEcho {
+
+        private bool _wasTold;
+        
+        public Task<string> Ask(string data) {
+            return Return(data);
+        }
+
+        public Task Notify() {
+            return Return();
+        }
+
+        public void Tell() {
+            _wasTold = true;
+        }
+
+        public Task<bool> VerifyTell() {
+            return Return(_wasTold);
+        }
     }
 }

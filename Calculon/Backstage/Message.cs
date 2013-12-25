@@ -28,9 +28,10 @@ using System.Reflection;
 using System.Text;
 
 namespace Droog.Calculon.Backstage {
-    public class Message {
+    public abstract class Message {
 
-        public static string GetContractFromMethodInfo(MethodInfo methodInfo) {
+        // TODO: This can be cached
+        public static string GetMessageNameFromMethodInfo(MethodInfo methodInfo) {
             var sb = new StringBuilder();
             sb.Append(methodInfo.Name);
             sb.Append("(");
@@ -45,24 +46,73 @@ namespace Droog.Calculon.Backstage {
         public readonly Guid Id;
         public readonly ActorRef Sender;
         public readonly ActorRef Receiver;
-        public readonly string Contract;
-        public readonly object[] Args;
-        public readonly MessageType Type;
-        public readonly Type Response;
+        public readonly string Name;
 
-        public Message(Guid id, ActorRef sender, ActorRef receiver, string contract, MessageType type, Type responseType, object[] args) {
+        protected Message(Guid id, string name, ActorRef sender, ActorRef receiver) {
             Id = id;
             Sender = sender;
-            Type = type;
-            Contract = contract;
-            Response = responseType;
-            Args = args;
+            Name = name;
+            Receiver = receiver;
         }
 
-        public string Signature { get { return (Type == MessageType.Fault || Type == MessageType.Response) ? Type.ToString() : Contract; } }
+        public virtual bool IsFault { get { return false; } }
 
         public override string ToString() {
-            return string.Format("{0}:{1}", Type, Contract);
+            return string.Format("{0}:{1}:{2}", Name, Receiver, Sender);
+        }
+    }
+
+    public class FailureMessage : Message {
+        public static readonly string GlobalName = "Fault";
+        public readonly Message Cause;
+        public readonly Exception Exception;
+
+        public FailureMessage(Exception exception, Message cause)
+            : base(cause.Id, GlobalName, cause.Receiver, cause.Sender) {
+            Exception = exception;
+            Cause = cause;
+        }
+
+        public override bool IsFault { get { return true; } }
+    }
+
+    public class ResponseMessage : Message {
+        public static readonly string GlobalName = "Response";
+        public readonly Message Cause;
+        public readonly object Response;
+
+        public ResponseMessage(object response, Message cause)
+            : base(cause.Id, GlobalName, cause.Receiver, cause.Sender) {
+            Response = response;
+            Cause = cause;
+        }
+    }
+
+    public class TellMessage : Message {
+        public readonly object[] Args;
+
+        public TellMessage(string name, ActorRef sender, ActorRef receiver, object[] args)
+            : base(Guid.NewGuid(), name, sender, receiver) {
+            Args = args;
+        }
+    }
+
+
+    public class NotificationMessage : Message {
+        public readonly object[] Args;
+
+        public NotificationMessage(Guid id, string name, ActorRef sender, ActorRef receiver, object[] args)
+            : base(id, name, sender, receiver) {
+            Args = args;
+        }
+    }
+
+    public class AskMessage : Message {
+        public readonly object[] Args;
+
+        public AskMessage(Guid id, string name, ActorRef sender, ActorRef receiver, object[] args)
+            : base(id, name, sender, receiver) {
+            Args = args;
         }
     }
 }

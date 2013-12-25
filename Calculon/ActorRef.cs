@@ -27,7 +27,25 @@ using System;
 using System.Linq;
 
 namespace Droog.Calculon {
-    public class ActorRef {
+    public class ActorRef :IEquatable<ActorRef> {
+
+        public static bool operator ==(ActorRef a, ActorRef b) {
+            if(ReferenceEquals(a, b)) {
+                return true;
+            }
+
+            // If one is null, but not both, return false.
+            if(((object)a == null) || ((object)b == null)) {
+                return false;
+            }
+
+            // Return true if the fields match:
+            return a.Equals(b);
+        }
+
+        public static bool operator !=(ActorRef a, ActorRef b) {
+            return !(a == b);
+        }
 
         public static ActorRef Parse(string address) {
             string[] path;
@@ -47,11 +65,13 @@ namespace Droog.Calculon {
         public readonly string Scheme;
         public readonly string[] Path;
         public readonly bool IsRelative;
+        private readonly int _hashCode;
 
         private ActorRef(string[] path, bool isRelative = false, string scheme = "calculon") {
             Scheme = scheme ?? "calculon";
             Path = path;
             IsRelative = isRelative;
+            _hashCode = ToString().GetHashCode();
         }
 
         public string LocalName { get { return Path.Last(); } }
@@ -68,6 +88,19 @@ namespace Droog.Calculon {
 
         public ActorRef RelativeTo(ActorRef parent) {
             return null;
+        }
+
+        public bool Equals(ActorRef other) {
+            return other != null && _hashCode == other._hashCode;
+        }
+
+        public override bool Equals(object obj) {
+            var other = obj as ActorRef;
+            return other != null && Equals(other);
+        }
+
+        public override int GetHashCode() {
+            return _hashCode;
         }
 
         public override string ToString() {

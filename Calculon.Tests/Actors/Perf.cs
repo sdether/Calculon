@@ -154,7 +154,7 @@ namespace Droog.Calculon.Tests.Actors {
     }
 
     public class PerfReceiver : AActor, IPerfReceiver {
-        readonly Dictionary<string,IPerfSender> _tellTargetCache = new Dictionary<string, IPerfSender>();
+        readonly Dictionary<ActorRef, IPerfSender> _tellTargetCache = new Dictionary<ActorRef, IPerfSender>();
 
         public Task<string> Ask(string data) {
             return Return(data);
@@ -162,8 +162,8 @@ namespace Droog.Calculon.Tests.Actors {
 
         public void Tell(Guid id, string data) {
             IPerfSender target;
-            if(!_tellTargetCache.TryGetValue(Sender.ToString(), out target)) {
-                _tellTargetCache[Sender.ToString()] = target = Context.Find<IPerfSender>(Sender).Proxy;
+            if(!_tellTargetCache.TryGetValue(Sender, out target)) {
+                _tellTargetCache[Sender] = target = Context.Find<IPerfSender>(Sender).Proxy;
             }
             target.TellResponse(id, data);
         }

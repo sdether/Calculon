@@ -32,7 +32,7 @@ namespace Droog.Calculon.Backstage {
         private interface IRoot : IActor { }
         private class Root : AActor, IRoot { }
 
-        private readonly ConcurrentDictionary<string, IMailbox> _mailboxes = new ConcurrentDictionary<string, IMailbox>();
+        private readonly ConcurrentDictionary<ActorRef, IMailbox> _mailboxes = new ConcurrentDictionary<ActorRef, IMailbox>();
         private readonly IMailbox _root;
         private readonly IActorBuilder _builder;
 
@@ -44,7 +44,7 @@ namespace Droog.Calculon.Backstage {
         public ActorRef RootRef { get { return _root.Ref; } }
 
         public IMailbox GetMailbox(ActorRef actorRef) {
-            return _mailboxes[actorRef.ToString()];
+            return _mailboxes[actorRef];
         }
 
         public ActorProxy<TActor> Create<TActor>(ActorRef caller, ActorRef parent, string name = null, Func<TActor> builder = null) where TActor : class {
@@ -62,7 +62,7 @@ namespace Droog.Calculon.Backstage {
         private IMailbox<TActor> CreateMailbox<TActor>(ActorRef parent, string name = null, Func<TActor> builder = null) where TActor : class {
             name = name ?? Guid.NewGuid().ToString();
             var mailbox = new Mailbox<TActor>(parent, name, this, builder ?? _builder.GetBuilder<TActor>());
-            _mailboxes[mailbox.Ref.ToString()] = mailbox;
+            _mailboxes[mailbox.Ref] = mailbox;
             return mailbox;
         }
     }

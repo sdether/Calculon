@@ -42,25 +42,24 @@ namespace Droog.Calculon.Backstage {
         public void Intercept(IInvocation invocation) {
             var methodInfo = invocation.Method;
             var returnType = methodInfo.ReturnType;
-            MessageType messageType;
-            Type responseType = null;
-            var id = Guid.Empty;
+            Message message;
+            var args = Enumerable.Range(0, methodInfo.GetParameters().Length).Select(invocation.GetArgumentValue).ToArray();
+            var name = Message.GetMessageNameFromMethodInfo(methodInfo);
             if(returnType == typeof(void)) {
-                messageType = MessageType.FireAndForget;
+                message = new TellMessage(name,_sender.Ref, _receiver.Ref, args);
             } else if(returnType == typeof(Task)) {
-                messageType = MessageType.Notification;
                 var response = _sender.CreatePendingResponse(typeof(object));
-                id = response.Id;
+                message = new NotificationMessage(response.Id, name, _sender.Ref, _receiver.Ref, args);
+                invocation.ReturnValue = response.Task;
+            } else if(returnType.IsGenericType && returnType.GetGenericTypeDefinition() == typeof(Task<>)) {
+                var responseType = returnType.GetGenericArguments().First();
+                var response = _sender.CreatePendingResponse(responseType);
+                message = new AskMessage(response.Id, name, _sender.Ref, _receiver.Ref, args);
                 invocation.ReturnValue = response.Task;
             } else {
-                messageType = MessageType.Result;
-                responseType = returnType.GetGenericArguments().First();
-                 var response = _sender.CreatePendingResponse(responseType);
-                 id = response.Id;
-                 invocation.ReturnValue = response.Task;
+                throw new InvalidOperationException(string.Format("Method '{0}' is not a valid message signature", methodInfo.Name));
             }
-            var args = Enumerable.Range(0, methodInfo.GetParameters().Length).Select(invocation.GetArgumentValue).ToArray();
-            _receiver.Enqueue(new Message(id, _sender.Ref, _receiver.Ref, Message.GetContractFromMethodInfo(methodInfo), messageType, responseType, args));
+            _receiver.Enqueue(message);
 
         }
     }

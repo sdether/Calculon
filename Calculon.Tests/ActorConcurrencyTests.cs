@@ -99,7 +99,7 @@ namespace Droog.Calculon.Tests {
                 new Thread(() => {
                     mre.Set();
                     start.WaitOne();
-                    a1.OnlyOneShallEnter(TimeSpan.FromMilliseconds(50)).ContinueWith(t => {
+                    a1.OnlyOneShallEnter(TimeSpan.FromMilliseconds(200)).ContinueWith(t => {
                         var r = t.Result;
                         Debug.WriteLine("{0}: {1}->{2}->{3}", i2, r.Start, r.During, r.End);
                         tcs.SetResult(t.Result);
@@ -136,7 +136,7 @@ namespace Droog.Calculon.Tests {
                 new Thread(() => {
                     mre.Set();
                     start.WaitOne();
-                    (i2 % 2 == 0 ? a1.OnlyOneShallEnter(TimeSpan.FromMilliseconds(50)) : a1.OnlyOneShallEnter2(TimeSpan.FromMilliseconds(50)))
+                    (i2 % 2 == 0 ? a1.OnlyOneShallEnter(TimeSpan.FromMilliseconds(200)) : a1.OnlyOneShallEnter2(TimeSpan.FromMilliseconds(50)))
                         .ContinueWith(t => {
                             var r = t.Result;
                             Debug.WriteLine("{0}: {1}->{2}->{3}", i2, r.Start, r.During, r.End);

@@ -34,15 +34,31 @@ namespace Droog.Calculon.Tests {
     public class StageTests {
 
         [Test]
-        public void Can_create_and_call_actor() {
+        public void Can_create_and_Ask() {
             var stage = new Stage();
-            var adder = stage.Create<IAdder>().Proxy;
-            var t1 = adder.Add(1, 1);
-            var t2 = adder.Add(2, 2);
-            t1.Wait();
-            t2.Wait();
-            Assert.AreEqual(2, t1.Result);
-            Assert.AreEqual(4, t2.Result);
+            var echo = stage.Create<IEcho>().Proxy;
+            var r1 = echo.Ask("foo").WaitForResult();
+            var r2 = echo.Ask("bar").WaitForResult();
+            Assert.AreEqual("foo", r1);
+            Assert.AreEqual("bar", r2);
+        }
+
+        [Test]
+        public void Can_create_and_Notify() {
+            var stage = new Stage();
+            var echo = stage.Create<IEcho>().Proxy;
+            var t = echo.Notify();
+            t.Wait();
+            Assert.IsTrue(t.IsCompleted);
+        }
+
+        [Test]
+        public void Can_create_and_Tell() {
+            var stage = new Stage();
+            var echo = stage.Create<IEcho>().Proxy;
+            echo.Tell();
+            var verify = echo.VerifyTell().WaitForResult();
+            Assert.IsTrue(verify);
         }
 
         [Test]
@@ -79,7 +95,7 @@ namespace Droog.Calculon.Tests {
             var b1Id = b1.Proxy.GetIdentity().WaitForResult();
             var b2Id = b2.Proxy.GetIdentity().WaitForResult();
 
-            Assert.AreNotEqual(a1Id,b1Id,"actor ids were the same");
+            Assert.AreNotEqual(a1Id, b1Id, "actor ids were the same");
             Assert.AreEqual(a1Id, a2Id, "a ids did not match");
             Assert.AreEqual(b1Id, b2Id, "b ids did not match");
         }

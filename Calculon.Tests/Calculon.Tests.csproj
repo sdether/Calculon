@@ -73,11 +73,13 @@
     <Compile Include="Actors\Adder.cs" />
     <Compile Include="Actors\Concurrently.cs" />
     <Compile Include="Actors\Counter.cs" />
+    <Compile Include="Actors\Echo.cs" />
     <Compile Include="Actors\Failing.cs" />
     <Compile Include="Actors\Identity.cs" />
     <Compile Include="Actors\Perf.cs" />
     <Compile Include="BuilderTests.cs" />
     <Compile Include="EstimatingPi.cs" />
+    <Compile Include="Backstage\MessageQueueTests.cs" />
     <Compile Include="MessagingPerfTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="StageTests.cs" />
