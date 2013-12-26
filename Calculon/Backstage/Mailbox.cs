@@ -32,7 +32,7 @@ using System.Threading.Tasks;
 using Castle.DynamicProxy;
 
 namespace Droog.Calculon.Backstage {
-    public class Mailbox<TActor> : IMailbox<TActor> where TActor : class {
+    public class Mailbox<TActor> : IChildMailbox, IParentMailbox, IMailbox<TActor> where TActor : class {
 
         private enum ProcessingState {
             Idle,
@@ -44,7 +44,8 @@ namespace Droog.Calculon.Backstage {
 
         private static readonly ProxyGenerator PROXY_GENERATOR = new ProxyGenerator();
 
-        private readonly ActorRef _parent;
+        private readonly IParentMailbox _parent;
+        private readonly List<IChildMailbox> _children = new List<IChildMailbox>();
         private readonly IBackstage _backstage;
         private readonly Func<TActor> _builder;
         private readonly ActorRef _actorRef;
@@ -55,16 +56,17 @@ namespace Droog.Calculon.Backstage {
         private readonly TActor _instance;
         private ProcessingState _processing = ProcessingState.Idle;
 
-        public Mailbox(ActorRef parent, string name, IBackstage backstage, Func<TActor> builder) {
+        public Mailbox(IParentMailbox parent, string name, IBackstage backstage, Func<TActor> builder) {
             _parent = parent;
             _backstage = backstage;
             _builder = builder;
-            _actorRef = (parent ?? ActorRef.Parse("/")).At(name);
+            _actorRef = (parent == null ? ActorRef.Parse("/") : parent.Ref).At(name);
             _instance = _builder();
             _buildTaskofTHandler = GetType().GetMethods(BindingFlags.NonPublic | BindingFlags.Instance).First(x => x.Name == "BuildAskHandler" && x.IsGenericMethod);
             var actor = _instance as IActor;
-            actor.Context = new ActorContext(_backstage, Ref, _parent);
+            actor.Context = new ActorContext(_backstage, Ref, _parent == null ? null : _parent.Ref);
             PopulatedMessageHandlers();
+            _parent.AddChild(this);
         }
 
         private void PopulatedMessageHandlers() {
@@ -123,15 +125,25 @@ namespace Droog.Calculon.Backstage {
                 // TODO: deal with this coming up null
                 var msg = m as NotificationMessage;
                 try {
-                    (methodInfo.Invoke(actor, msg.Args) as Task).ContinueWith(t => callback(t.IsFaulted
-                        ? new FailureMessage(t.Exception.Flatten(), m)
-                        : new ResponseMessage(null, m) as Message
-                    ));
+                    (methodInfo.Invoke(actor, msg.Args) as Task).ContinueWith(t => {
+                        if(!t.IsFaulted) {
+                            callback(new ResponseMessage(null, m));
+                            return;
+                        }
+                        var e = t.Exception.Flatten() as Exception;
+                        var fatal = false;
+                        if(e.GetType() == typeof(FatalActorException)) {
+                            e = e.InnerException;
+                            fatal = true;
+                        }
+                        callback(new FailureMessage(e, m, fatal));
+                    });
                 } catch(TargetInvocationException e) {
-                    callback(new FailureMessage(e.InnerException, m));
+                    callback(new FailureMessage(e.InnerException, m, fatal: true));
                 } catch(Exception e) {
                     callback(new FailureMessage(e, m));
                 }
+
                 return true;
             };
         }
@@ -142,12 +154,21 @@ namespace Droog.Calculon.Backstage {
                 // TODO: deal with this coming up null
                 var msg = m as AskMessage;
                 try {
-                    (methodInfo.Invoke(actor, msg.Args) as Task<TResult>).ContinueWith(t => callback(t.IsFaulted
-                        ? new FailureMessage(t.Exception.Flatten(), m)
-                        : new ResponseMessage(t.Result, m) as Message
-                    ));
+                    (methodInfo.Invoke(actor, msg.Args) as Task<TResult>).ContinueWith(t => {
+                        if(!t.IsFaulted) {
+                            callback(new ResponseMessage(t.Result, m));
+                            return;
+                        }
+                        var e = t.Exception.Flatten() as Exception;
+                        var fatal = false;
+                        if(e.GetType() == typeof(FatalActorException)) {
+                            e = e.InnerException;
+                            fatal = true;
+                        }
+                        callback(new FailureMessage(e, m, fatal));
+                    });
                 } catch(TargetInvocationException e) {
-                    callback(new FailureMessage(e.InnerException, m));
+                    callback(new FailureMessage(e.InnerException, m, fatal: true));
                 } catch(Exception e) {
                     callback(new FailureMessage(e, m));
                 }
@@ -163,7 +184,7 @@ namespace Droog.Calculon.Backstage {
                 try {
                     methodInfo.Invoke(actor, msg.Args);
                 } catch(TargetInvocationException e) {
-                    callback(new FailureMessage(e.InnerException, m));
+                    callback(new FailureMessage(e.InnerException, m, fatal: true));
                 } catch(Exception e) {
                     callback(new FailureMessage(e, m));
                 }
@@ -214,6 +235,10 @@ namespace Droog.Calculon.Backstage {
             }
         }
 
+        public void AddChild(IChildMailbox childMailbox) {
+            _children.Add(childMailbox);
+        }
+
         private void Dequeue(object state) {
 
             // TODO: should be able peek ahead in the queue and reduce the need for two locks per message
@@ -245,10 +270,10 @@ namespace Droog.Calculon.Backstage {
             if(!handler(msg, _instance, responseMsg => {
 
                 // TODO: propagate failures to parent and defer sending them on to the original sender
-                //if(responseMsg.IsFault) {
-                //    var parentMailbox = _backstage.GetMailbox(_parent);
-                //    parentMailbox.Enqueue(responseMsg);
-                //}
+                if(responseMsg.IsFatalFault) {
+                    Suspend();
+                    _parent.Enqueue(responseMsg);
+                }
                 var mailbox = _backstage.GetMailbox(responseMsg.Receiver);
                 mailbox.Enqueue(responseMsg);
                 item.Complete();
@@ -256,6 +281,28 @@ namespace Droog.Calculon.Backstage {
 
                 // TODO: deliver via generic message handler
             };
+        }
+
+        public void Suspend() {
+            _processing = ProcessingState.Suspended;
+            foreach(var child in _children) {
+                child.Suspend();
+            }
+        }
+
+        public void Resume() {
+            _processing = ProcessingState.Processing;
+            foreach(var child in _children) {
+                child.Resume();
+            }
+        }
+
+        public void Terminate() {
+            throw new NotImplementedException();
+        }
+
+        public void Restart() {
+            throw new NotImplementedException();
         }
     }
 }

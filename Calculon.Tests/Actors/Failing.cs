@@ -63,13 +63,13 @@ namespace Droog.Calculon.Tests.Actors {
 
         public Task<int> FailImmediateOfT() {
             var completion = Context.GetCompletion<int>();
-            completion.Fail(new Failure());
+            completion.Fault(new Failure());
             return completion;
         }
 
         public Task<int> FailLaterOfT() {
             var completion = Context.GetCompletion<int>();
-            new Timer(_ => completion.Fail(new Failure()), null, 100, Timeout.Infinite);
+            new Timer(_ => completion.Fault(new Failure()), null, 100, Timeout.Infinite);
             return completion;
         }
 

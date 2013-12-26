@@ -58,6 +58,7 @@
     <Compile Include="Backstage\ActorProxyInterceptor.cs" />
     <Compile Include="Backstage\Backstage.cs" />
     <Compile Include="Backstage\ActorContext.cs" />
+    <Compile Include="Backstage\FatalActorException.cs" />
     <Compile Include="Backstage\Message.cs" />
     <Compile Include="Backstage\MessageQueue.cs" />
     <Compile Include="Backstage\TaskHelpers.cs" />

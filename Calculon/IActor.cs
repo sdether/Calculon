@@ -23,19 +23,54 @@
  * ----------------------------------------------------------------------------
  */
 
+using System;
 using System.Threading.Tasks;
+using Droog.Calculon.Backstage;
 
 namespace Droog.Calculon {
+
+    public enum SupervisionAction {
+        Resume,
+        Restart,
+        Terminate,
+        Escalate
+    }
 
     public interface IActor {
         IActorContext Context { get; set; }
         ActorRef Sender { get; set; }
+        Task<SupervisionAction> OnDescendantFault(FailureMessage failure);
+        Task<object> OnUnknownMessage(Message message);
+        Task Start();
+        Task Restart();
+        Task Stop();
     }
 
     public abstract class AActor: IActor {
 
         IActorContext IActor.Context { get { return Context; } set { Context = value; } }
         ActorRef IActor.Sender { get { return Sender; } set { Sender = value; } }
+        public virtual Task<SupervisionAction> OnDescendantFault(FailureMessage failure) {
+            return Return(SupervisionAction.Resume);
+        }
+
+        public virtual Task<object> OnUnknownMessage(Message message) {
+            var completion = Context.GetCompletion<object>();
+            completion.Fault(new UnhandledMessageException());
+            return completion;
+        }
+
+        public virtual Task Start() {
+            return Return();
+        }
+
+        public virtual Task Restart() {
+            return Return();
+        }
+
+        public virtual Task Stop() {
+            return Return();
+        }
 
         protected IActorContext Context { get; set; }
         protected ActorRef Sender { get; set; }
@@ -48,4 +83,6 @@ namespace Droog.Calculon {
             return Context.Return();
         }
     }
+
+    public class UnhandledMessageException : Exception {}
 }

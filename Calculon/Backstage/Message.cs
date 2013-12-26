@@ -55,7 +55,7 @@ namespace Droog.Calculon.Backstage {
             Receiver = receiver;
         }
 
-        public virtual bool IsFault { get { return false; } }
+        public virtual bool IsFatalFault { get { return false; } }
 
         public override string ToString() {
             return string.Format("{0}:{1}:{2}", Name, Receiver, Sender);
@@ -65,15 +65,17 @@ namespace Droog.Calculon.Backstage {
     public class FailureMessage : Message {
         public static readonly string GlobalName = "Fault";
         public readonly Message Cause;
+        private readonly bool _fatal;
         public readonly Exception Exception;
 
-        public FailureMessage(Exception exception, Message cause)
+        public FailureMessage(Exception exception, Message cause, bool fatal = false)
             : base(cause.Id, GlobalName, cause.Receiver, cause.Sender) {
             Exception = exception;
             Cause = cause;
+            _fatal = fatal;
         }
 
-        public override bool IsFault { get { return true; } }
+        public override bool IsFatalFault { get { return _fatal; } }
     }
 
     public class ResponseMessage : Message {

@@ -25,6 +25,7 @@
 
 using System;
 using System.Threading.Tasks;
+using Droog.Calculon.Backstage;
 
 namespace Droog.Calculon {
 
@@ -55,13 +56,17 @@ namespace Droog.Calculon {
             _completionSource.SetResult(result);
         }
 
-        public void Fail(Exception exception) {
+        public void Fault(Exception exception) {
             _completionSource.SetException(exception);
+        }
+
+        public void FatalFault(Exception exception) {
+            _completionSource.SetException(new FatalActorException(exception));
         }
 
         public void Forward(Task<TResult> task) {
             if(task.IsFaulted) {
-                Fail(task.Exception);
+                Fault(task.Exception);
             } else {
                 Complete(task.Result);
             }

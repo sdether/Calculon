@@ -26,8 +26,20 @@
 using System;
 
 namespace Droog.Calculon.Backstage {
+
     public interface IMailbox<TActor> : IMailbox where TActor: class {
         TActor BuildProxy(IMailbox sender);
+    }
+
+    public interface IChildMailbox : IMailbox {
+        void Suspend();
+        void Resume();
+        void Terminate();
+        void Restart();
+    }
+
+    public interface IParentMailbox : IMailbox {
+        void AddChild(IChildMailbox childMailbox);
     }
 
     public interface IMailbox {
