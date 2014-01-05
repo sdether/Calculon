@@ -61,6 +61,7 @@
     <Compile Include="Backstage\FatalActorException.cs" />
     <Compile Include="Backstage\Message.cs" />
     <Compile Include="Backstage\MessageQueue.cs" />
+    <Compile Include="Backstage\ReflectedTaskCompletionSource.cs" />
     <Compile Include="Backstage\TaskHelpers.cs" />
     <Compile Include="Backstage\IBackstage.cs" />
     <Compile Include="Backstage\IMailbox.cs" />

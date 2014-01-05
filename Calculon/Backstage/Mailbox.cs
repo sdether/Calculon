@@ -32,7 +32,7 @@ using System.Threading.Tasks;
 using Castle.DynamicProxy;
 
 namespace Droog.Calculon.Backstage {
-    public class Mailbox<TActor> : IChildMailbox, IParentMailbox, IMailbox<TActor> where TActor : class {
+    public class Mailbox<TActor> : IMailbox<TActor> where TActor : class {
 
         private enum ProcessingState {
             Idle,
@@ -44,8 +44,8 @@ namespace Droog.Calculon.Backstage {
 
         private static readonly ProxyGenerator PROXY_GENERATOR = new ProxyGenerator();
 
-        private readonly IParentMailbox _parent;
-        private readonly List<IChildMailbox> _children = new List<IChildMailbox>();
+        private readonly ActorRef _parent;
+        private readonly List<ActorRef> _children = new List<ActorRef>();
         private readonly IBackstage _backstage;
         private readonly Func<TActor> _builder;
         private readonly ActorRef _actorRef;
@@ -56,17 +56,17 @@ namespace Droog.Calculon.Backstage {
         private readonly TActor _instance;
         private ProcessingState _processing = ProcessingState.Idle;
 
-        public Mailbox(IParentMailbox parent, string name, IBackstage backstage, Func<TActor> builder) {
+        public Mailbox(ActorRef parent, string name, IBackstage backstage, Func<TActor> builder) {
             _parent = parent;
             _backstage = backstage;
             _builder = builder;
-            _actorRef = (parent == null ? ActorRef.Parse("/") : parent.Ref).At(name);
+            _actorRef = (parent ?? ActorRef.Parse("/")).At(name);
             _instance = _builder();
             _buildTaskofTHandler = GetType().GetMethods(BindingFlags.NonPublic | BindingFlags.Instance).First(x => x.Name == "BuildAskHandler" && x.IsGenericMethod);
             var actor = _instance as IActor;
-            actor.Context = new ActorContext(_backstage, Ref, _parent == null ? null : _parent.Ref);
+            actor.Context = new ActorContext(_backstage, Ref, _parent);
             PopulatedMessageHandlers();
-            _parent.AddChild(this);
+            _backstage.Enqueue(new CreatedMessage(Ref,_parent));
         }
 
         private void PopulatedMessageHandlers() {
@@ -220,8 +220,8 @@ namespace Droog.Calculon.Backstage {
             return response;
         }
 
-        public TActor BuildProxy(IMailbox sender) {
-            return PROXY_GENERATOR.CreateInterfaceProxyWithoutTarget<TActor>(new ActorProxyInterceptor<TActor>(sender, this));
+        public TActor BuildProxy(ActorRef receiver) {
+            return PROXY_GENERATOR.CreateInterfaceProxyWithoutTarget<TActor>(new ActorProxyInterceptor<TActor>(this, receiver,_backstage));
         }
 
         public void Enqueue(Message msg) {
@@ -233,10 +233,6 @@ namespace Droog.Calculon.Backstage {
                 _processing = ProcessingState.Processing;
                 ThreadPool.QueueUserWorkItem(Dequeue);
             }
-        }
-
-        public void AddChild(IChildMailbox childMailbox) {
-            _children.Add(childMailbox);
         }
 
         private void Dequeue(object state) {
@@ -272,10 +268,9 @@ namespace Droog.Calculon.Backstage {
                 // TODO: propagate failures to parent and defer sending them on to the original sender
                 if(responseMsg.IsFatalFault) {
                     Suspend();
-                    _parent.Enqueue(responseMsg);
+                    _backstage.Enqueue(responseMsg.Wrap(Ref,_parent));
                 }
-                var mailbox = _backstage.GetMailbox(responseMsg.Receiver);
-                mailbox.Enqueue(responseMsg);
+                _backstage.Enqueue(responseMsg);
                 item.Complete();
             })) {
 
@@ -283,17 +278,17 @@ namespace Droog.Calculon.Backstage {
             };
         }
 
-        public void Suspend() {
+        private void Suspend() {
             _processing = ProcessingState.Suspended;
             foreach(var child in _children) {
-                child.Suspend();
+                _backstage.Enqueue(new SuspendMessage(Ref,child));
             }
         }
 
-        public void Resume() {
+        private void Resume() {
             _processing = ProcessingState.Processing;
             foreach(var child in _children) {
-                child.Resume();
+                _backstage.Enqueue(new ResumeMessage(Ref, child));
             }
         }
 

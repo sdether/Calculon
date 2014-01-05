@@ -113,7 +113,7 @@ namespace Droog.Calculon.Tests.Backstage {
 
         private class TestMessage : Message {
             public TestMessage()
-                : base(Guid.NewGuid(), "test", null, null) { }
+                : base("test", null, null, Guid.NewGuid()) { }
         }
     }
 }

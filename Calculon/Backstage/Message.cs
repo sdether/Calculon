@@ -48,8 +48,11 @@ namespace Droog.Calculon.Backstage {
         public readonly ActorRef Receiver;
         public readonly string Name;
 
-        protected Message(Guid id, string name, ActorRef sender, ActorRef receiver) {
+        protected Message(string name, ActorRef sender, ActorRef receiver, Guid id = default(Guid)) {
             Id = id;
+            if(Id == default(Guid)) {
+                Id = Guid.NewGuid();
+            }
             Sender = sender;
             Name = name;
             Receiver = receiver;
@@ -60,6 +63,37 @@ namespace Droog.Calculon.Backstage {
         public override string ToString() {
             return string.Format("{0}:{1}:{2}", Name, Receiver, Sender);
         }
+
+        public Message Wrap(ActorRef sender, ActorRef receiver) {
+            return new WrappedMessage(sender, receiver, this);
+        }
+
+        public virtual Message Unwrap() {
+            return this;
+        }
+    }
+
+    public class WrappedMessage : Message {
+
+        public readonly Message Wrapped;
+        public WrappedMessage(ActorRef sender, ActorRef receiver, Message wrapped)
+            : base(wrapped.Name, sender, receiver) {
+            Wrapped = wrapped;
+        }
+
+        public override Message Unwrap() {
+            return Wrapped.Unwrap();
+        }
+    }
+
+    public class SuspendMessage : Message {
+        public static readonly string GlobalName = "Suspend";
+        public SuspendMessage(ActorRef sender, ActorRef receiver) : base(GlobalName, sender, receiver) { }
+    }
+
+    public class ResumeMessage : Message {
+        public static readonly string GlobalName = "Resume";
+        public ResumeMessage(ActorRef sender, ActorRef receiver) : base(GlobalName, sender, receiver) { }
     }
 
     public class FailureMessage : Message {
@@ -69,7 +103,7 @@ namespace Droog.Calculon.Backstage {
         public readonly Exception Exception;
 
         public FailureMessage(Exception exception, Message cause, bool fatal = false)
-            : base(cause.Id, GlobalName, cause.Receiver, cause.Sender) {
+            : base(GlobalName, cause.Receiver, cause.Sender, cause.Id) {
             Exception = exception;
             Cause = cause;
             _fatal = fatal;
@@ -84,7 +118,7 @@ namespace Droog.Calculon.Backstage {
         public readonly object Response;
 
         public ResponseMessage(object response, Message cause)
-            : base(cause.Id, GlobalName, cause.Receiver, cause.Sender) {
+            : base(GlobalName, cause.Receiver, cause.Sender, cause.Id) {
             Response = response;
             Cause = cause;
         }
@@ -94,7 +128,7 @@ namespace Droog.Calculon.Backstage {
         public readonly object[] Args;
 
         public TellMessage(string name, ActorRef sender, ActorRef receiver, object[] args)
-            : base(Guid.NewGuid(), name, sender, receiver) {
+            : base(name, sender, receiver, Guid.NewGuid()) {
             Args = args;
         }
     }
@@ -104,7 +138,7 @@ namespace Droog.Calculon.Backstage {
         public readonly object[] Args;
 
         public NotificationMessage(Guid id, string name, ActorRef sender, ActorRef receiver, object[] args)
-            : base(id, name, sender, receiver) {
+            : base(name, sender, receiver, id) {
             Args = args;
         }
     }
@@ -113,8 +147,13 @@ namespace Droog.Calculon.Backstage {
         public readonly object[] Args;
 
         public AskMessage(Guid id, string name, ActorRef sender, ActorRef receiver, object[] args)
-            : base(id, name, sender, receiver) {
+            : base(name, sender, receiver, id) {
             Args = args;
         }
+    }
+
+    public class CreatedMessage : Message {
+        public static readonly string GlobalName = "Created";
+        public CreatedMessage(ActorRef child, ActorRef parent) : base(GlobalName, child, parent) { }
     }
 }

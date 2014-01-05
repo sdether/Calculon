@@ -25,14 +25,16 @@
 
 using System;
 using System.Collections.Concurrent;
+using Castle.DynamicProxy;
 
 namespace Droog.Calculon.Backstage {
     public class Backstage : IBackstage {
+        private static readonly ProxyGenerator PROXY_GENERATOR = new ProxyGenerator();
 
         private interface IRoot : IActor { }
         private class Root : AActor, IRoot { }
 
-        private readonly ConcurrentDictionary<ActorRef, IParentMailbox> _mailboxes = new ConcurrentDictionary<ActorRef, IParentMailbox>();
+        private readonly ConcurrentDictionary<ActorRef, IMailbox> _mailboxes = new ConcurrentDictionary<ActorRef, IMailbox>();
         private readonly IMailbox _root;
         private readonly IActorBuilder _builder;
 
@@ -43,26 +45,38 @@ namespace Droog.Calculon.Backstage {
 
         public ActorRef RootRef { get { return _root.Ref; } }
 
-        public IMailbox GetMailbox(ActorRef actorRef) {
+        private IMailbox GetMailbox(ActorRef actorRef) {
             return _mailboxes[actorRef];
         }
 
         public ActorProxy<TActor> Create<TActor>(ActorRef caller, ActorRef parent, string name = null, Func<TActor> builder = null) where TActor : class {
             var mailbox = CreateMailbox(parent, name, builder);
+            var targetRef = mailbox.Ref;
+            return BuildActorProxy<TActor>(caller, targetRef);
+        }
+
+        private ActorProxy<TActor> BuildActorProxy<TActor>(ActorRef caller, ActorRef targetRef) where TActor : class {
             var callerMailbox = GetMailbox(caller);
-            return new ActorProxy<TActor>(mailbox.Ref, mailbox.BuildProxy(callerMailbox));
+            return new ActorProxy<TActor>(
+                targetRef,
+                PROXY_GENERATOR.CreateInterfaceProxyWithoutTarget<TActor>(new ActorProxyInterceptor<TActor>(callerMailbox, targetRef, this))
+            );
         }
 
         public ActorProxy<TActor> Find<TActor>(ActorRef caller, ActorRef actorRef) where TActor : class {
-            var mailbox = GetMailbox(actorRef).As<TActor>();
-            var callerMailbox = GetMailbox(caller);
-            return new ActorProxy<TActor>(mailbox.Ref, mailbox.BuildProxy(callerMailbox));
+            return BuildActorProxy<TActor>(caller, actorRef);
+        }
+
+        public void Enqueue(Message message) {
+            var mailbox = GetMailbox(message.Receiver);
+
+            // TODO: if no mailbox found, stuff in dead letter
+            mailbox.Enqueue(message);
         }
 
         private IMailbox<TActor> CreateMailbox<TActor>(ActorRef parent, string name = null, Func<TActor> builder = null) where TActor : class {
             name = name ?? Guid.NewGuid().ToString();
-            var parentMailbox = _mailboxes[parent];
-            var mailbox = new Mailbox<TActor>(parentMailbox, name, this, builder ?? _builder.GetBuilder<TActor>());
+            var mailbox = new Mailbox<TActor>(parent, name, this, builder ?? _builder.GetBuilder<TActor>());
             _mailboxes[mailbox.Ref] = mailbox;
             return mailbox;
         }
