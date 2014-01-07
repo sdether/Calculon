@@ -29,20 +29,19 @@ using System.Linq;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
-using Castle.DynamicProxy;
+using Droog.Calculon.Backstage.Messages;
 
 namespace Droog.Calculon.Backstage {
-    public class Mailbox<TActor> : IMailbox<TActor> where TActor : class {
+    public class Mailbox<TActor> : IMailbox where TActor : class {
 
         private enum ProcessingState {
             Idle,
             Processing,
-            Suspended
+            Suspended,
+            Dead
         }
 
         private delegate bool Handler(Message message, TActor instance, Action<Message> response);
-
-        private static readonly ProxyGenerator PROXY_GENERATOR = new ProxyGenerator();
 
         private readonly ActorRef _parent;
         private readonly List<ActorRef> _children = new List<ActorRef>();
@@ -66,7 +65,7 @@ namespace Droog.Calculon.Backstage {
             var actor = _instance as IActor;
             actor.Context = new ActorContext(_backstage, Ref, _parent);
             PopulatedMessageHandlers();
-            _backstage.Enqueue(new CreatedMessage(Ref,_parent));
+            _backstage.Enqueue(new CreatedMessage(Ref, _parent));
         }
 
         private void PopulatedMessageHandlers() {
@@ -87,36 +86,48 @@ namespace Droog.Calculon.Backstage {
                 var signature = Message.GetMessageNameFromMethodInfo(methodInfo);
                 _handlers[signature] = handler;
             }
-            _handlers[ResponseMessage.GlobalName] = BuildResponseHandler();
-            _handlers[FailureMessage.GlobalName] = BuildFaultHandler();
+            _handlers[SystemMessageNames.Response.ToString()] = ResponseHandler;
+            _handlers[SystemMessageNames.Fault.ToString()] = FaultHandler;
+            _handlers[SystemMessageNames.Created.ToString()] = ChildCreationHandler;
+            _handlers[SystemMessageNames.Suspend.ToString()] = SuspendHandler;
+            _handlers[SystemMessageNames.Resume.ToString()] = ResumeHandler;
         }
 
-        private Handler BuildFaultHandler() {
-            return (msg, actor, callback) => {
+        private bool FaultHandler(Message msg, TActor actor, Action<Message> callback) {
 
-                // TODO: deal with this coming up null
-                var failureMessage = msg as FailureMessage;
-                var response = GetPendingResponse(failureMessage.Id);
-                if(response == null) {
-                    return false;
-                }
-                response.Fault(failureMessage.Exception);
-                return true;
-            };
+            // TODO: deal with this coming up null
+            var failureMessage = msg as FailureMessage;
+            var response = GetPendingResponse(failureMessage.Id);
+            if(response == null) {
+                return false;
+            }
+            response.Fault(failureMessage.Exception);
+            return true;
         }
 
-        private Handler BuildResponseHandler() {
-            return (msg, actor, callback) => {
+        private bool ResponseHandler(Message msg, TActor actor, Action<Message> callback) {
 
-                // TODO: deal with this coming up null
-                var responseMessage = msg as ResponseMessage;
-                var response = GetPendingResponse(responseMessage.Id);
-                if(response == null) {
-                    return false;
-                }
-                response.Complete(responseMessage.Response);
-                return true;
-            };
+            // TODO: deal with this coming up null
+            var responseMessage = msg as ResponseMessage;
+            var response = GetPendingResponse(responseMessage.Id);
+            if(response == null) {
+                return false;
+            }
+            response.Complete(responseMessage.Response);
+            return true;
+        }
+
+        private bool ChildCreationHandler(Message msg, TActor actor, Action<Message> callback) {
+            return true;
+        }
+
+
+        private bool SuspendHandler(Message msg, TActor actor, Action<Message> callback) {
+            return true;
+        }
+
+        private bool ResumeHandler(Message msg, TActor actor, Action<Message> callback) {
+            return true;
         }
 
         private Handler BuildNotificationHandler(MethodInfo methodInfo) {
@@ -208,20 +219,12 @@ namespace Droog.Calculon.Backstage {
             return typeof(TActor).IsAssignableFrom(typeof(TActor1));
         }
 
-        public IMailbox<TActor1> As<TActor1>() where TActor1 : class {
-            return this as IMailbox<TActor1>;
-        }
-
         public MessageResponse CreatePendingResponse(Type type) {
             var response = new MessageResponse(type);
             lock(_pendingResponses) {
                 _pendingResponses.Add(response.Id, response);
             }
             return response;
-        }
-
-        public TActor BuildProxy(ActorRef receiver) {
-            return PROXY_GENERATOR.CreateInterfaceProxyWithoutTarget<TActor>(new ActorProxyInterceptor<TActor>(this, receiver,_backstage));
         }
 
         public void Enqueue(Message msg) {
@@ -268,7 +271,7 @@ namespace Droog.Calculon.Backstage {
                 // TODO: propagate failures to parent and defer sending them on to the original sender
                 if(responseMsg.IsFatalFault) {
                     Suspend();
-                    _backstage.Enqueue(responseMsg.Wrap(Ref,_parent));
+                    _backstage.Enqueue(responseMsg.Wrap(Ref, _parent));
                 }
                 _backstage.Enqueue(responseMsg);
                 item.Complete();
@@ -281,7 +284,7 @@ namespace Droog.Calculon.Backstage {
         private void Suspend() {
             _processing = ProcessingState.Suspended;
             foreach(var child in _children) {
-                _backstage.Enqueue(new SuspendMessage(Ref,child));
+                _backstage.Enqueue(new SuspendMessage(Ref, child));
             }
         }
 

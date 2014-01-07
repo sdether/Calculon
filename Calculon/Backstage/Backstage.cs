@@ -26,9 +26,48 @@
 using System;
 using System.Collections.Concurrent;
 using Castle.DynamicProxy;
+using Droog.Calculon.Backstage.Messages;
 
 namespace Droog.Calculon.Backstage {
     public class Backstage : IBackstage {
+
+        private class MailboxProxy : IMessageReceiver {
+            private readonly Backstage _backstage;
+            private IMailbox _proxyTarget;
+
+            public MailboxProxy(Backstage backstage, IMailbox proxyTarget) {
+                _backstage = backstage;
+                _proxyTarget = proxyTarget;
+            }
+
+            public ActorRef Ref { get { return _proxyTarget.Ref; } }
+
+            public void Enqueue(Message msg) {
+                if(!VerifyMailbox()) {
+                    return;
+                }
+                while(true) {
+                    try {
+                        _proxyTarget.Enqueue(msg);
+                        break;
+                    } catch(DeadMailboxException) {
+                        if(!VerifyMailbox())
+                            break;
+                    }
+                }
+            }
+
+            private bool VerifyMailbox() {
+                if(_proxyTarget == null) {
+                    _proxyTarget = _backstage.GetMailbox(Ref);
+                    if(_proxyTarget == null) {
+                        // TODO: route to dead letters
+                        return false;
+                    }
+                }
+                return true;
+            }
+        }
         private static readonly ProxyGenerator PROXY_GENERATOR = new ProxyGenerator();
 
         private interface IRoot : IActor { }
@@ -57,9 +96,13 @@ namespace Droog.Calculon.Backstage {
 
         private ActorProxy<TActor> BuildActorProxy<TActor>(ActorRef caller, ActorRef targetRef) where TActor : class {
             var callerMailbox = GetMailbox(caller);
+            var targetMailbox = GetMailbox(targetRef);
+            // TODO: handle lack of target mailbox by routing to dead letters
             return new ActorProxy<TActor>(
                 targetRef,
-                PROXY_GENERATOR.CreateInterfaceProxyWithoutTarget<TActor>(new ActorProxyInterceptor<TActor>(callerMailbox, targetRef, this))
+                PROXY_GENERATOR.CreateInterfaceProxyWithoutTarget<TActor>(
+                    new ActorProxyInterceptor(callerMailbox, new MailboxProxy(this, targetMailbox))
+                )
             );
         }
 
@@ -74,7 +117,7 @@ namespace Droog.Calculon.Backstage {
             mailbox.Enqueue(message);
         }
 
-        private IMailbox<TActor> CreateMailbox<TActor>(ActorRef parent, string name = null, Func<TActor> builder = null) where TActor : class {
+        private IMailbox CreateMailbox<TActor>(ActorRef parent, string name = null, Func<TActor> builder = null) where TActor : class {
             name = name ?? Guid.NewGuid().ToString();
             var mailbox = new Mailbox<TActor>(parent, name, this, builder ?? _builder.GetBuilder<TActor>());
             _mailboxes[mailbox.Ref] = mailbox;

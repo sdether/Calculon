@@ -26,6 +26,7 @@
 using System;
 using System.Threading.Tasks;
 using Droog.Calculon.Backstage;
+using Droog.Calculon.Backstage.Messages;
 
 namespace Droog.Calculon {
 

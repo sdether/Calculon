@@ -24,6 +24,7 @@
  */
 
 using System;
+using Droog.Calculon.Backstage.Messages;
 
 namespace Droog.Calculon.Backstage {
     public interface IBackstage {

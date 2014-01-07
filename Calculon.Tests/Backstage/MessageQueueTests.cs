@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Droog.Calculon.Backstage;
+using Droog.Calculon.Backstage.Messages;
 using NUnit.Framework;
 
 namespace Droog.Calculon.Tests.Backstage {

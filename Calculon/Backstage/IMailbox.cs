@@ -24,18 +24,17 @@
  */
 
 using System;
+using Droog.Calculon.Backstage.Messages;
 
 namespace Droog.Calculon.Backstage {
 
-    public interface IMailbox<TActor> : IMailbox where TActor: class {
-        TActor BuildProxy(ActorRef receiver);
+    public interface IMailbox : IMessageReceiver {
+        bool IsMailboxFor<TActor>();
+        MessageResponse CreatePendingResponse(Type type);
     }
 
-    public interface IMailbox {
+    public interface IMessageReceiver {
         ActorRef Ref { get; }
-        bool IsMailboxFor<TActor>();
-        IMailbox<TActor> As<TActor>() where TActor : class;
-        MessageResponse CreatePendingResponse(Type type);
         void Enqueue(Message msg);
     }
 }

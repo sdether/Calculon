@@ -27,18 +27,16 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Castle.DynamicProxy;
+using Droog.Calculon.Backstage.Messages;
 
 namespace Droog.Calculon.Backstage {
-    public class ActorProxyInterceptor<TActor> : IInterceptor
-        where TActor : class {
+    public class ActorProxyInterceptor : IInterceptor {
         private readonly IMailbox _sender;
-        private readonly ActorRef _receiver;
-        private readonly IBackstage _backstage;
+        private readonly IMessageReceiver _receiver;
 
-        public ActorProxyInterceptor(IMailbox sender, ActorRef receiver, IBackstage backstage) {
+        public ActorProxyInterceptor(IMailbox sender, IMessageReceiver receiver) {
             _sender = sender;
             _receiver = receiver;
-            _backstage = backstage;
         }
 
         public void Intercept(IInvocation invocation) {
@@ -48,20 +46,20 @@ namespace Droog.Calculon.Backstage {
             var args = Enumerable.Range(0, methodInfo.GetParameters().Length).Select(invocation.GetArgumentValue).ToArray();
             var name = Message.GetMessageNameFromMethodInfo(methodInfo);
             if(returnType == typeof(void)) {
-                message = new TellMessage(name,_sender.Ref, _receiver, args);
+                message = new TellMessage(name,_sender.Ref, _receiver.Ref, args);
             } else if(returnType == typeof(Task)) {
                 var response = _sender.CreatePendingResponse(typeof(object));
-                message = new NotificationMessage(response.Id, name, _sender.Ref, _receiver, args);
+                message = new NotificationMessage(response.Id, name, _sender.Ref, _receiver.Ref, args);
                 invocation.ReturnValue = response.Task;
             } else if(returnType.IsGenericType && returnType.GetGenericTypeDefinition() == typeof(Task<>)) {
                 var responseType = returnType.GetGenericArguments().First();
                 var response = _sender.CreatePendingResponse(responseType);
-                message = new AskMessage(response.Id, name, _sender.Ref, _receiver, args);
+                message = new AskMessage(response.Id, name, _sender.Ref, _receiver.Ref, args);
                 invocation.ReturnValue = response.Task;
             } else {
                 throw new InvalidOperationException(string.Format("Method '{0}' is not a valid message signature", methodInfo.Name));
             }
-            _backstage.Enqueue(message);
+            _receiver.Enqueue(message);
         }
     }
 }

@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using Droog.Calculon.Backstage.Messages;
 
 namespace Droog.Calculon.Backstage {
     public class MessageQueue {
