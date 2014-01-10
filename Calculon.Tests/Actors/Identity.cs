@@ -27,7 +27,7 @@ using System;
 using System.Threading.Tasks;
 
 namespace Droog.Calculon.Tests.Actors {
-    public interface IIdentity {
+    public interface IIdentity : IActor {
         Task<Guid> GetIdentity();
     }
 

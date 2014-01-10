@@ -73,6 +73,7 @@
     <Compile Include="Backstage\Messages\TellMessage.cs" />
     <Compile Include="Backstage\Messages\WrappedMessage.cs" />
     <Compile Include="Backstage\ReflectedTaskCompletionSource.cs" />
+    <Compile Include="Backstage\SystemActors\User.cs" />
     <Compile Include="Backstage\TaskHelpers.cs" />
     <Compile Include="Backstage\IBackstage.cs" />
     <Compile Include="Backstage\IMailbox.cs" />

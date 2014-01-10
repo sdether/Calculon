@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Droog.Calculon.Backstage.Messages;
@@ -25,6 +26,9 @@ namespace Droog.Calculon.Backstage {
             public InternalQueueItem(Message message) : base(message) { }
 
             public void StartProcessing() {
+                if(_status == QueueItemStatus.InFlight) {
+                    throw new InvalidOperationException(string.Format("message '{0}' is already in flight", Message.Id));
+                }
                 _status = QueueItemStatus.InFlight;
             }
         }
@@ -69,13 +73,15 @@ namespace Droog.Calculon.Backstage {
                 if(_out == -1) {
                     return;
                 }
-                var unfinished = _queue.FindIndex(0, x => x.Status == QueueItemStatus.InFlight || x.Status == QueueItemStatus.Queued);
-                if(unfinished == -1) {
+                var unfinishedIndex = _queue.FindIndex(0, x => x.Status == QueueItemStatus.InFlight || x.Status == QueueItemStatus.Queued);
+                if(unfinishedIndex == -1) {
                     _queue.Clear();
                     _out = -1;
+                } else if(unfinishedIndex == 0) {
+                    return;
                 } else {
-                    _queue.RemoveRange(0, unfinished);
-                    _out = -1;
+                    _queue.RemoveRange(0, unfinishedIndex);
+                    _out -= unfinishedIndex;
                 }
             }
         }

@@ -29,7 +29,7 @@ using System.Diagnostics;
 using System.Threading.Tasks;
 
 namespace Droog.Calculon.Tests.Actors {
-    public interface IPerf {
+    public interface IPerf : IActor {
         Task<int> Respond(int a, string b);
         Task SignalCounter(int count);
         void Increment();
@@ -57,7 +57,7 @@ namespace Droog.Calculon.Tests.Actors {
         }
     }
 
-    public interface IPerfSender {
+    public interface IPerfSender : IActor {
         void TellResponse(Guid id, string data);
         Task<TimeSpan> AskParallel(int messageCount);
         Task<TimeSpan> AskSequential(int messageCount);
@@ -148,7 +148,7 @@ namespace Droog.Calculon.Tests.Actors {
 
     }
 
-    public interface IPerfReceiver {
+    public interface IPerfReceiver : IActor {
         Task<string> Ask(string data);
         void Tell(Guid id, string data);
     }

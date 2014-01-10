@@ -29,9 +29,9 @@ using System.Threading.Tasks;
 
 namespace Droog.Calculon.Tests.Actors {
 
-    public class Failure : Exception {}
+    public class Failure : Exception { }
 
-    public interface IFailing {
+    public interface IFailing : IActor {
         Task FailImmediate();
         Task FailLater();
         Task FailByThrowing();

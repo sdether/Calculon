@@ -27,7 +27,7 @@ using System.Threading.Tasks;
 
 namespace Droog.Calculon.Tests.Actors {
 
-    public interface IEcho {
+    public interface IEcho : IActor {
         Task<string> Ask(string data);
         Task Notify();
         void Tell();

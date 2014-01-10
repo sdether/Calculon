@@ -27,9 +27,10 @@ using System;
 using System.Collections.Concurrent;
 using Castle.DynamicProxy;
 using Droog.Calculon.Backstage.Messages;
+using Droog.Calculon.Backstage.SystemActors;
 
 namespace Droog.Calculon.Backstage {
-    public class Backstage : IBackstage {
+    public class Backstage : IBackstage, IMailbox {
 
         private class MailboxProxy : IMessageReceiver {
             private readonly Backstage _backstage;
@@ -74,27 +75,28 @@ namespace Droog.Calculon.Backstage {
         private class Root : AActor, IRoot { }
 
         private readonly ConcurrentDictionary<ActorRef, IMailbox> _mailboxes = new ConcurrentDictionary<ActorRef, IMailbox>();
-        private readonly IMailbox _root;
         private readonly IActorBuilder _builder;
-
+        private readonly ActorRef _ref = ActorRef.Parse("/");
         public Backstage() {
             _builder = new ActorBuilder();
-            _root = CreateMailbox<IRoot>(null);
+            _mailboxes[_ref] = this;
+            CreateMailbox<Cast>(_ref, "cast");
+            CreateMailbox<Stagehands>(_ref, "stagehands");
+            CreateMailbox<DeadLetters>(_ref, "deadletters");
+            CreateMailbox<Temp>(_ref, "temp");
         }
-
-        public ActorRef RootRef { get { return _root.Ref; } }
 
         private IMailbox GetMailbox(ActorRef actorRef) {
             return _mailboxes[actorRef];
         }
 
-        public ActorProxy<TActor> Create<TActor>(ActorRef caller, ActorRef parent, string name = null, Func<TActor> builder = null) where TActor : class {
+        public ActorProxy<TActor> Create<TActor>(ActorRef caller, ActorRef parent, string name = null, Func<TActor> builder = null) where TActor : class, IActor {
             var mailbox = CreateMailbox(parent, name, builder);
             var targetRef = mailbox.Ref;
             return BuildActorProxy<TActor>(caller, targetRef);
         }
 
-        private ActorProxy<TActor> BuildActorProxy<TActor>(ActorRef caller, ActorRef targetRef) where TActor : class {
+        private ActorProxy<TActor> BuildActorProxy<TActor>(ActorRef caller, ActorRef targetRef) where TActor : class, IActor {
             var callerMailbox = GetMailbox(caller);
             var targetMailbox = GetMailbox(targetRef);
             // TODO: handle lack of target mailbox by routing to dead letters
@@ -106,8 +108,20 @@ namespace Droog.Calculon.Backstage {
             );
         }
 
-        public ActorProxy<TActor> Find<TActor>(ActorRef caller, ActorRef actorRef) where TActor : class {
+        public ActorProxy<TActor> Find<TActor>(ActorRef caller, ActorRef actorRef) where TActor : class, IActor {
             return BuildActorProxy<TActor>(caller, actorRef);
+        }
+
+        ActorRef IMessageReceiver.Ref {
+            get { throw new NotImplementedException(); }
+        }
+
+        void IMessageReceiver.Enqueue(Message message) {
+            var created = message as CreatedMessage;
+            if(created != null) {
+                return;
+            }
+            throw new InvalidOperationException("root does not accept messages of type: " + message.GetType());
         }
 
         public void Enqueue(Message message) {
@@ -117,11 +131,19 @@ namespace Droog.Calculon.Backstage {
             mailbox.Enqueue(message);
         }
 
-        private IMailbox CreateMailbox<TActor>(ActorRef parent, string name = null, Func<TActor> builder = null) where TActor : class {
+        private IMailbox CreateMailbox<TActor>(ActorRef parent, string name = null, Func<TActor> builder = null) where TActor : class, IActor {
             name = name ?? Guid.NewGuid().ToString();
             var mailbox = new Mailbox<TActor>(parent, name, this, builder ?? _builder.GetBuilder<TActor>());
             _mailboxes[mailbox.Ref] = mailbox;
             return mailbox;
+        }
+
+        bool IMailbox.IsMailboxFor<TActor>() {
+            throw new NotImplementedException();
+        }
+
+        MessageResponse IMailbox.CreatePendingResponse(Type type) {
+            throw new NotImplementedException();
         }
     }
 }

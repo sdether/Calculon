@@ -34,7 +34,7 @@ using NUnit.Framework;
 namespace Droog.Calculon.Tests {
     [TestFixture]
     public class ActorContextTests {
-        public interface IContextTester {
+        public interface IContextTester : IActor {
             Task<Guid[]> Can_find_actor_by_ref();
             Task<Tuple<Guid, ActorRef>> Can_create_child_actor();
         }

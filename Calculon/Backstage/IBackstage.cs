@@ -28,9 +28,8 @@ using Droog.Calculon.Backstage.Messages;
 
 namespace Droog.Calculon.Backstage {
     public interface IBackstage {
-        ActorRef RootRef { get; }
-        ActorProxy<TActor> Create<TActor>(ActorRef caller, ActorRef parent, string name, Func<TActor> builder) where TActor : class;
-        ActorProxy<TActor> Find<TActor>(ActorRef caller, ActorRef actorRef) where TActor : class;
+        ActorProxy<TActor> Create<TActor>(ActorRef caller, ActorRef parent, string name, Func<TActor> builder) where TActor : class, IActor;
+        ActorProxy<TActor> Find<TActor>(ActorRef caller, ActorRef actorRef) where TActor : class, IActor;
         void Enqueue(Message message);
     }
 }

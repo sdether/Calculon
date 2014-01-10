@@ -32,7 +32,7 @@ using System.Threading.Tasks;
 using Droog.Calculon.Backstage.Messages;
 
 namespace Droog.Calculon.Backstage {
-    public class Mailbox<TActor> : IMailbox where TActor : class {
+    public class Mailbox<TActor> : IMailbox where TActor : IActor {
 
         private enum ProcessingState {
             Idle,

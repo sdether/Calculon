@@ -112,6 +112,90 @@ namespace Droog.Calculon.Tests.Backstage {
             Assert.AreEqual(0, stats.Pending, "wrong pending after compact");
         }
 
+        [Test]
+        public void Compact_cleans_up_queue_with_inflight_items() {
+            var queue = new MessageQueue();
+            var messages = new Queue<Message>();
+            var inflight = new List<MessageQueue.QueueItem>();
+            for(var i = 0; i < 15; i++) {
+                var msg = new TestMessage();
+                messages.Enqueue(msg);
+                queue.Enqueue(msg);
+            }
+            var stats = queue.GetStats();
+            Assert.AreEqual(15, stats.Size, "wrong size after insert");
+            Assert.AreEqual(15, stats.Pending, "wrong pending after insert");
+            for(var i = 0; i < 5; i++) {
+                var item = queue.Dequeue();
+                item.Complete();
+                var msg = messages.Dequeue();
+                Assert.AreSame(msg, item.Message, string.Format("wrong message at index {0}", i));
+            }
+            for(var i = 0; i < 5; i++) {
+                var item = queue.Dequeue();
+                inflight.Add(item);
+                var msg = messages.Dequeue();
+                Assert.AreSame(msg, item.Message, string.Format("wrong message at index {0}", i));
+            }
+            stats = queue.GetStats();
+            Assert.AreEqual(15, stats.Size, "wrong size after dequeue");
+            Assert.AreEqual(5, stats.Pending, "wrong pending after dequeue");
+            queue.Compact();
+            stats = queue.GetStats();
+            Assert.AreEqual(10, stats.Size, "wrong size after compact");
+            Assert.AreEqual(5, stats.Pending, "wrong pending after compact");
+            foreach(var x in inflight) {
+                x.Complete();
+            }
+            queue.Compact();
+            stats = queue.GetStats();
+            Assert.AreEqual(5, stats.Size, "wrong size after compact");
+            Assert.AreEqual(5, stats.Pending, "wrong pending after compact");
+        }
+
+        [Test]
+        public void Can_compact_with_inflight_and_one_pending() {
+            var queue = new MessageQueue();
+            for(var i = 0; i < 10; i++) {
+                queue.Enqueue(new TestMessage());
+            }
+            var inflight = new List<MessageQueue.QueueItem>();
+            for(var i = 0; i < 9; i++) {
+                inflight.Add(queue.Dequeue());
+            }
+            queue.Compact();
+            var stats = queue.GetStats();
+            Assert.AreEqual(1, stats.Pending);
+            var last = queue.Dequeue();
+            Assert.IsNotNull(last);
+            stats = queue.GetStats();
+            Assert.AreEqual(0, stats.Pending);
+            var none = queue.Dequeue();
+            Assert.IsNull(none);
+        }
+
+        [Test]
+        public void Can_compact_with_one_inflight_and_several_pending() {
+            var queue = new MessageQueue();
+            for(var i = 0; i < 10; i++) {
+                queue.Enqueue(new TestMessage());
+            }
+            var stats = queue.GetStats();
+            Assert.AreEqual(10, stats.Pending);
+            var inflight = queue.Dequeue();
+            queue.Compact();
+            stats = queue.GetStats();
+            Assert.AreEqual(9, stats.Pending);
+            for(var i = 0; i < 9; i++) {
+                var item = queue.Dequeue();
+                Assert.IsNotNull(item);
+            }
+            stats = queue.GetStats();
+            Assert.AreEqual(0, stats.Pending);
+            var none = queue.Dequeue();
+            Assert.IsNull(none);
+        }
+
         private class TestMessage : Message {
             public TestMessage()
                 : base("test", null, null, Guid.NewGuid()) { }

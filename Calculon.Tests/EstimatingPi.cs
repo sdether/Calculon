@@ -32,7 +32,7 @@ using NUnit.Framework;
 namespace Droog.Calculon.Tests {
     [TestFixture, Ignore]
     public class EstimatingPi {
-        public interface IWorker {
+        public interface IWorker : IActor {
             Task<double> Range(int @from, int to);
         }
 
@@ -78,7 +78,7 @@ namespace Droog.Calculon.Tests {
             }
         }
 
-        public interface IAccumulator {
+        public interface IAccumulator : IActor {
             Task<Tuple<double, TimeSpan>> Start();
             void Accumulate(double value);
         }

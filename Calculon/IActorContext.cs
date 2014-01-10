@@ -34,7 +34,7 @@ namespace Droog.Calculon {
         Task Return();
         Completion<TResult> GetCompletion<TResult>();
         Completion GetCompletion();
-        ActorProxy<TActor> Create<TActor>(string name = null, Func<TActor> builder = null) where TActor : class;
-        ActorProxy<TActor> Find<TActor>(ActorRef actorRef) where TActor : class;
+        ActorProxy<TActor> Create<TActor>(string name = null, Func<TActor> builder = null) where TActor : class, IActor;
+        ActorProxy<TActor> Find<TActor>(ActorRef actorRef) where TActor : class, IActor;
     }
 }

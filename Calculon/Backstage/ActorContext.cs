@@ -57,11 +57,11 @@ namespace Droog.Calculon.Backstage {
             return new Completion();
         }
 
-        public ActorProxy<TActor> Create<TActor>(string name = null, Func<TActor> builder = null) where TActor : class {
+        public ActorProxy<TActor> Create<TActor>(string name = null, Func<TActor> builder = null) where TActor : class, IActor {
             return _backstage.Create(Self, Self, name: name, builder: builder);
         }
 
-        public ActorProxy<TActor> Find<TActor>(ActorRef actorRef) where TActor : class {
+        public ActorProxy<TActor> Find<TActor>(ActorRef actorRef) where TActor : class, IActor {
             return _backstage.Find<TActor>(Self, actorRef);
         }
     }

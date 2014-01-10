@@ -30,17 +30,17 @@ namespace Droog.Calculon {
     public class Stage : IStage {
 
         private readonly IBackstage _backstage;
-
+        private readonly ActorRef _temp = ActorRef.Parse("/temp");
         public Stage() {
             _backstage = new Backstage.Backstage();
         }
 
-        public ActorProxy<TActor> Find<TActor>(ActorRef actorRef) where TActor : class {
-            return _backstage.Find<TActor>(_backstage.RootRef, actorRef);
+        public ActorProxy<TActor> Find<TActor>(ActorRef actorRef) where TActor : class, IActor {
+            return _backstage.Find<TActor>(_temp, actorRef);
         }
 
-        public ActorProxy<TActor> Create<TActor>(string name = null, Func<TActor> builder = null) where TActor : class {
-            return _backstage.Create<TActor>(_backstage.RootRef, _backstage.RootRef, name: name, builder: builder);
+        public ActorProxy<TActor> Create<TActor>(string name = null, Func<TActor> builder = null) where TActor : class, IActor {
+            return _backstage.Create<TActor>(_temp, _temp, name: name, builder: builder);
         }
     }
 }

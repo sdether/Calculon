@@ -34,7 +34,7 @@ namespace Droog.Calculon.Tests.Actors {
         public int End;
     }
 
-    public interface IConcurrently {
+    public interface IConcurrently : IActor {
         Task<ConcurrentResult> OnlyOneShallEnter(TimeSpan block);
         Task<ConcurrentResult> OnlyOneShallEnter2(TimeSpan block);
     }

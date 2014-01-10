@@ -26,7 +26,7 @@
 using System.Threading.Tasks;
 
 namespace Droog.Calculon.Tests.Actors {
-    public interface ICounter {
+    public interface ICounter : IActor {
         Task Increment();
         Task<int> Current();
     }

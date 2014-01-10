@@ -29,7 +29,7 @@ using System.Threading.Tasks;
 
 namespace Droog.Calculon.Tests.Actors {
 
-    public interface IAdder {
+    public interface IAdder : IActor {
         Task<int> Add(int a, int b);
         Task<int> AddDelayed(int a, int b, TimeSpan delay);
     }
